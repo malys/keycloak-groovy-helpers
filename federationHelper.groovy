@@ -30,7 +30,7 @@ def applyRoles(final String compName, roles, ComponentRepresentation component, 
 def triggerUpdate(ComponentRepresentation component, RealmResource realmResource, rp, comH) {
     SynchronizationResultRepresentation syncResult = realmResource.userStorage().syncUsers(component.id, "triggerFullSync")
 
-    if (syncResult && syncResult.added > 0 && syncResult.updated > 0) {
+    if (syncResult && (syncResult.added > 0 || syncResult.updated > 0)) {
         rp.add(new Report("Federation ${component.name} synchronisation: ${syncResult.status}", Report.Status.Success)).start().stop()
     } else {
         rp.add(new Report("Federation ${component.name} synchronisation", Report.Status.Fail)).start().stop()

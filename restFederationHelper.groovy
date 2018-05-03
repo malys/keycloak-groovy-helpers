@@ -37,7 +37,7 @@ def createFederation(final String fedName, RealmResource realmResource, rp, comm
             evictionHour = []
             evictionMinute = []
             maxLifespan = []
-            url = [prop["${FEDERATION_URL}"]]
+            url = [prop["FEDERATION_URL"]]
             proxy_enabled = ["false"]
         }
         compPres.config["role-sync"] = ["true"]
@@ -56,5 +56,20 @@ def createFederation(final String fedName, RealmResource realmResource, rp, comm
     }
 
     return component
+}
+
+// one task all step
+def add(final String fedName, RealmResource realmResource, rp, comm, fedH, prop) {
+    comH.debug("add Rest federation $fedName")
+    ComponentRepresentation component = createFederation(
+            fedName,
+            realmResource,
+            rp,
+            comH,
+            prop
+    )
+
+    fedH.triggerUpdate(component, realmResource, rp, comH)
+
 }
 

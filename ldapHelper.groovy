@@ -26,6 +26,7 @@ def createFederation(final String fedName, String customFilter, RealmResource re
             providerId = "ldap"
             providerType = "org.keycloak.storage.UserStorageProvider"
             parentId = realm.id
+            vendor = ["rhds"]
             config = new MultivaluedHashMap<>()
         }
         compPres.config.with {
@@ -41,7 +42,7 @@ def createFederation(final String fedName, String customFilter, RealmResource re
             usersDn = ["cn=users,cn=accounts," + prop["LDAP_CONTEXT"]]
             authType = ["simple"]
             bindDn = [prop["LDAP_LOGIN"] + prop["LDAP_CONTEXT"]]
-            bindCredential = [prop["SECRET"]]
+            bindCredential = [prop["LDAP_PW"]]
             searchScope = ["1"]
             useTruststoreSpi = ["ldapsOnly"]
             connectionPooling = ["true"]
@@ -49,8 +50,8 @@ def createFederation(final String fedName, String customFilter, RealmResource re
             allowKerberosAuthentication = ["false"]
             useKerberosForPasswordAuthentication = ["false"]
             batchSizeForSync = ["1000"]
-            fullSyncPeriod = ["-1"]
-            changedSyncPeriod = ["-1"]
+            fullSyncPeriod = ["604800"]
+            changedSyncPeriod = ["86400"]
             cachePolicy = ["DEFAULT"]
             evictionDay = []
             evictionHour = []
@@ -84,9 +85,9 @@ def createFederation(final String fedName, String customFilter, RealmResource re
     if (fistNameComponent != null) {
         fistNameComponent.config["ldap.attribute"] = ["givenName"]
         realmResource.components().component(fistNameComponent.getId()).update(fistNameComponent)
-        rp.add(new Report("Component $fedName created", Report.Status.Success)).start().stop()
+        rp.add(new Report("Component $fedName updated", Report.Status.Success)).start().stop()
     } else {
-        rp.add(new Report("Component $fedName created", Report.Status.Fail)).start().stop()
+        rp.add(new Report("Component $fedName updated", Report.Status.Fail)).start().stop()
     }
 
     return component
