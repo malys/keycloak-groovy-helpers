@@ -3,13 +3,15 @@ package helpers
 import com.lyra.deployer.data.Report
 import org.keycloak.admin.client.Keycloak
 import org.keycloak.admin.client.resource.RealmResource
+import org.keycloak.admin.client.resource.RolesResource
+import org.keycloak.representations.idm.ClientRepresentation
 import org.keycloak.representations.idm.RealmRepresentation
 import org.keycloak.representations.idm.RoleRepresentation
 
 /**
  * RH-SSO Realm helpers
  */
-def createRealm(final String realmName, final String sslReq, Keycloak k, rp, comH) {
+def createRealm(final String realmName, final String sslReq, Keycloak k, log, comH) {
     RealmRepresentation real = new RealmRepresentation()
     real.with {
         id = realmName
@@ -42,44 +44,46 @@ def createRealm(final String realmName, final String sslReq, Keycloak k, rp, com
         k.realms().create(real)
         realmResource = k.realm(realmName)
         if (realmResource) {
-            rp.add(new Report("Realm $realmName created", Report.Status.Success)).start().stop()
+            log.info("Realm $realmName created")
         } else {
-            rp.add(new Report("Realm $realmName failed", Report.Status.Success)).start().stop()
+            log.info("Realm $realmName failed")
         }
     } else {
-        rp.add(new Report("Realm $realmName yet installed", Report.Status.Success)).start().stop()
+        log.info("Realm $realmName yet installed")
     }
-
-
-
     return realmResource
 }
 
 
 def add(final String realmName, final String sslReq,
-        final String roleName, final String descriptio, RoleRepresentation.Composites composits,
-        Keycloak k, rp, comH) {
+        final String roleName, final String descriptio, Map<String, List<String>> composits,
+        Keycloak k, log, comH) {
 
-    RealmResource realmResource = createRealm(realmName, sslReq, k, rp, comH)
+    RealmResource realmResource = createRealm(realmName, sslReq, k, log, comH)
 
-    addRole(roleName, descriptio, composits, realmResource, rp, comH)
+    addRole(roleName, descriptio, composits, realmResource, log, comH)
+
+    return realmResource
 }
 
 
 def addRole(final String roleName,
             final String descriptio,
-            RoleRepresentation.Composites composits,
+            Map<String, List<String>> composits,
             RealmResource realmResource,
-            rp, comH) {
+            log, comH) {
 
-    List<RoleRepresentation> roles = realmResource.roles().list().find {
-        RoleRepresentation r ->
-            r.name == roleName
-    }
+    RolesResource roleRes = realmResource.roles()
+
     RoleRepresentation role
-    if (roles.size() > 0) {
-        role = roles.get(0)
-    } else {
+
+    if (roleRes && roleRes.list()) {
+        role = roleRes.list().find {
+            RoleRepresentation r ->
+                r.name == roleName
+        }
+    }
+    if (role == null) {
         role = new RoleRepresentation()
         role.with {
             id = roleName
@@ -89,10 +93,31 @@ def addRole(final String roleName,
 
         if (composits) {
             role.composite = true
-            role.composites = composits
         }
         realmResource.roles().create(role)
+        role = realmResource.roles().get(roleName).toRepresentation()
+        if (composits) {
+            realmResource.rolesById().addComposites(role.getId(), getRolesRepresentation(composits, realmResource))
+        }
     }
 
     return role
+}
+
+def getRolesRepresentation(final Map<String, List<String>> composits,
+                           RealmResource realmResource) {
+
+    List<RoleRepresentation> list = []
+
+    composits.each { String clientName, List<String> roleNames ->
+        List<ClientRepresentation> clients = realmResource.clients().findByClientId(clientName)
+        if (clients && clients.size() > 0) {
+            list.addAll(realmResource.clients().get(clients.get(0).id).roles().list().findAll {
+                roleNames.contains(it.name)
+            })
+        }
+
+    }
+
+    return list
 }

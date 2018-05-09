@@ -10,7 +10,7 @@ import org.keycloak.common.util.MultivaluedHashMap
 import org.keycloak.representations.idm.ComponentRepresentation
 import org.keycloak.representations.idm.RealmRepresentation
 
-def createFederation(final String fedName, RealmResource realmResource, rp, comm, prop) {
+def createFederation(final String fedName, RealmResource realmResource, log, comm, prop) {
     RealmRepresentation realm = realmResource.toRepresentation()
 
     //Check component
@@ -45,31 +45,31 @@ def createFederation(final String fedName, RealmResource realmResource, rp, comm
         compPres.config["uppercase-role"] = ["true"]
         compPres.config["attr-sync"] = ["true"]
 
-        comm.checkResponse(realmResource.components().add(compPres), "Component $fedName created", rp)
+        comm.checkResponse(realmResource.components().add(compPres), "Component $fedName created", log)
         components = realmResource.components().query(realm.getId(),
                 "org.keycloak.storage.UserStorageProvider",
                 fedName)
         component = components.get(0)
     } else {
         component = components.get(0)
-        rp.add(new Report("Component $fedName yet installed", Report.Status.Success)).start().stop()
+        log.info("Component $fedName yet installed")
     }
 
     return component
 }
 
 // one task all step
-def add(final String fedName, RealmResource realmResource, rp, comm, fedH, prop) {
+def add(final String fedName, RealmResource realmResource, log, comm, fedH, prop) {
     comH.debug("add Rest federation $fedName")
     ComponentRepresentation component = createFederation(
             fedName,
             realmResource,
-            rp,
+            log,
             comH,
             prop
     )
 
-    fedH.triggerUpdate(component, realmResource, rp, comH)
+    fedH.triggerUpdate(component, realmResource, log, comH)
 
 }
 

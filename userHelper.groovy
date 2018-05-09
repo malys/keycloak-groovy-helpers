@@ -1,6 +1,5 @@
 package helpers
 
-import com.lyra.deployer.data.Report
 import org.keycloak.admin.client.resource.RealmResource
 import org.keycloak.representations.idm.ClientRepresentation
 import org.keycloak.representations.idm.CredentialRepresentation
@@ -8,7 +7,6 @@ import org.keycloak.representations.idm.RoleRepresentation
 import org.keycloak.representations.idm.UserRepresentation
 
 import javax.ws.rs.core.Response
-
 /**
  * RH-SSO User helpers
  */
@@ -17,15 +15,16 @@ def createUser(
         final String firstNam,
         final String lastNam,
         final String emai,
-        RealmResource realmResource, rp, comH) {
+        RealmResource realmResource, log, comH) {
 
     UserRepresentation user
 
-    List<UserRepresentation> result = realmResource.users().search(userNam, 0, 10)
+    List<UserRepresentation> result = realmResource.users().search(userNam, firstNam, lastNam, emai, 0,1)
+
 
     if (result != null && result.size() > 0) {
         user = result.get(0)
-        rp.add(new Report("User ${userNam}", Report.Status.Success)).start().stop()
+        log.info("User ${userNam}")
     } else {
         user = new UserRepresentation()
         user.with {
@@ -36,7 +35,7 @@ def createUser(
             email = emai
         }
         Response response = realmResource.users().create(user)
-        comH.checkResponse(response, "User $userNam created", rp)
+        comH.checkResponse(response, "User $userNam created", log)
         String userId = response.getLocation().getPath().replaceAll(".*/([^/]+)\$", "\$1")
 
         user.id = userId
@@ -52,19 +51,19 @@ def add(
         final String lastNam,
         final String emai,
         final String password,
-        RealmResource realmResource, rp, comH) {
+        RealmResource realmResource, log, comH) {
 
     UserRepresentation user = createUser(userNam,
             firstNam,
             lastNam,
             emai,
-            realmResource, rp, comH)
+            realmResource, log, comH)
 
-    changePassword(password, user, realmResource, rp, comH)
+    changePassword(password, user, realmResource, log, comH)
 }
 
 def addClientRole(String roleName, UserRepresentation user,
-                  final String clientName, RealmResource realmResource, rp, comH) {
+                  final String clientName, RealmResource realmResource, log, comH) {
 
     // Get client
     ClientRepresentation app1Client = realmResource.clients()
@@ -77,14 +76,14 @@ def addClientRole(String roleName, UserRepresentation user,
         // Assign client level role to user
         realmResource.users().get(user.id).roles() //
                 .clientLevel(app1Client.getId()).add(Arrays.asList(userClientRole))
-        rp.add(new Report("Role $clientName.$roleName added to ${user.username}", Report.Status.Success)).start().stop()
+        log.info("Role $clientName.$roleName added to ${user.username}")
     } catch (Exception e) {
-        rp.add(new Report("Role $roleName added to ${user.username}:" + e.message, Report.Status.Fail,)).start().stop()
+        log.error("Role $roleName added to ${user.username}:" + e.message)
     }
 
 }
 
-def addRealmRole(String roleName, UserRepresentation user, RealmResource realmResource, rp, comH) {
+def addRealmRole(String roleName, UserRepresentation user, RealmResource realmResource, log, comH) {
 
     // Get realm role "tester" (requires view-realm role)
     RoleRepresentation role = realmResource.roles()//
@@ -93,15 +92,15 @@ def addRealmRole(String roleName, UserRepresentation user, RealmResource realmRe
     // Assign realm role to user
     try {
         realmResource.users().get(user.id).roles().realmLevel().add(Arrays.asList(role))
-        rp.add(new Report("Role ${realmResource.toRepresentation().id}.$roleName added to ${user.username}", Report.Status.Success)).start().stop()
+        log.info("Role ${realmResource.toRepresentation().id}.$roleName added to ${user.username}")
     } catch (Exception e) {
-        rp.add(new Report("Role $roleName added to ${user.username}:" + e.message, Report.Status.Fail,)).start().stop()
+        log.error("Role $roleName added to ${user.username}:" + e.message)
     }
 
 
 }
 
-def changePassword(String pw, UserRepresentation user, RealmResource realmResource, rp, comH) {
+def changePassword(String pw, UserRepresentation user, RealmResource realmResource, log, comH) {
 
     // Define password credential
     CredentialRepresentation passwordCred = new CredentialRepresentation()
@@ -112,9 +111,9 @@ def changePassword(String pw, UserRepresentation user, RealmResource realmResour
     // Set password credential
     try {
         realmResource.users().get(user.id).resetPassword(passwordCred)
-        rp.add(new Report("Change password for ${user.username}", Report.Status.Success)).start().stop()
+        log.info("Change password for ${user.username}")
     } catch (Exception e) {
-        rp.add(new Report("Change password for ${user.username}", Report.Status.Fail)).start().stop()
+        log.error("Change password for ${user.username}")
     }
 
 }

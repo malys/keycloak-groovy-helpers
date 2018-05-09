@@ -5,12 +5,12 @@ import com.lyra.deployer.data.Report
 /**
  * RH-SSO Common helpers
  */
-def checkResponse(javax.ws.rs.core.Response result, String message, rp) {
+def checkResponse(javax.ws.rs.core.Response result, String message, log) {
     if (result.getStatus() != 201) {
-        rp.add(new Report("${message}: status=${result.getStatus()}", Report.Status.Fail)).start().stop()
+        log.error("${message}: status=${result.getStatus()}")
         return false
     } else {
-        rp.add(new Report("${message}", Report.Status.Success)).start().stop()
+        log.info("${message}")
         return true
     }
 }

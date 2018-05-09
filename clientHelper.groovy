@@ -1,9 +1,7 @@
 package helpers
 
-import com.lyra.deployer.data.Report
 import org.keycloak.admin.client.resource.RealmResource
 import org.keycloak.representations.idm.ClientRepresentation
-
 /**
  * RH-SSO Client helpers
  */
@@ -14,11 +12,11 @@ def createClient(
         final Boolean bearerOnl,
         final List<String> redirectUri,
         final List<String> webOrigin,
-        RealmResource realmResource, rp, comH) {
+        RealmResource realmResource, log, comH) {
 
     //security
     if (System.getProperty("SECURITY") == "OFF") {
-        rp.add(new Report("SECURITY OFF", Report.Status.Warn)).start().stop()
+        log.warn("SECURITY OFF")
     } else {
         boolean found = (redirectUri.find { uri -> (uri.indexOf("*") > -1) } != null)
         found = found || (webOrigin.find { uri -> (uri.indexOf("*") > -1) } != null)
@@ -45,11 +43,10 @@ def createClient(
 
     if (clients.size() > 0) {
         client = clients.get(0)
-        rp.add(new Report("Client $clientName yet installed", Report.Status.Success)).start().stop()
+        log.info("Client $clientName yet installed")
     } else {
-        comH.checkResponse(realmResource.clients().create(client), "Client $clientName created", rp)
+        comH.checkResponse(realmResource.clients().create(client), "Client $clientName created", log)
     }
 
     return client
 }
-

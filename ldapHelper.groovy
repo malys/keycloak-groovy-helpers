@@ -10,7 +10,7 @@ import org.keycloak.representations.idm.RealmRepresentation
  * LDAP federation helpers
  */
 
-def createFederation(final String fedName, String customFilter, RealmResource realmResource, rp, comH, prop) {
+def createFederation(final String fedName, String customFilter, RealmResource realmResource, log, comH, prop) {
     RealmRepresentation realm = realmResource.toRepresentation()
 
     //Check component
@@ -66,14 +66,14 @@ def createFederation(final String fedName, String customFilter, RealmResource re
             compPres.config.customUserSearchFilter = [customFilter]
         }
 
-        comH.checkResponse(realmResource.components().add(compPres), "Component $fedName created", rp)
+        comH.checkResponse(realmResource.components().add(compPres), "Component $fedName created", log)
         components = realmResource.components().query(realm.getId(),
                 "org.keycloak.storage.UserStorageProvider",
                 fedName)
         component = components.get(0)
     } else {
         component = components.get(0)
-        rp.add(new Report("Component $fedName yet installed", Report.Status.Success)).start().stop()
+        log.info("Component $fedName yet installed")
     }
 
     // Configure LDAP Components
@@ -85,28 +85,28 @@ def createFederation(final String fedName, String customFilter, RealmResource re
     if (fistNameComponent != null) {
         fistNameComponent.config["ldap.attribute"] = ["givenName"]
         realmResource.components().component(fistNameComponent.getId()).update(fistNameComponent)
-        rp.add(new Report("Component $fedName updated", Report.Status.Success)).start().stop()
+        log.info("Component $fedName updated")
     } else {
-        rp.add(new Report("Component $fedName updated", Report.Status.Fail)).start().stop()
+        log.error("Component $fedName updated")
     }
 
     return component
 }
 
 // one task all step
-def add(String fedName, String customFilter, String roleCompName, roles, RealmResource realmResource, rp, comH, fedH, prop) {
+def add(String fedName, String customFilter, String roleCompName, roles, RealmResource realmResource, log, comH, fedH, prop) {
     comH.debug("add LDAP $fedName $customFilter $roleCompName")
     ComponentRepresentation component = createFederation(
             fedName,
             customFilter,
             realmResource,
-            rp,
+            log,
             comH,
             prop
     )
 
-    fedH.applyRoles(roleCompName, roles, component, realmResource, rp, comH)
+    fedH.applyRoles(roleCompName, roles, component, realmResource, log, comH)
 
-    fedH.triggerUpdate(component, realmResource, rp, comH)
+    fedH.triggerUpdate(component, realmResource, log, comH)
 
 }

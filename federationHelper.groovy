@@ -5,10 +5,11 @@ import org.keycloak.admin.client.resource.RealmResource
 import org.keycloak.common.util.MultivaluedHashMap
 import org.keycloak.representations.idm.ComponentRepresentation
 import org.keycloak.representations.idm.SynchronizationResultRepresentation
+
 /**
  * RH-SSO Federation helpers
  */
-def applyRoles(final String compName, roles, ComponentRepresentation component, RealmResource realmResource, rp, comm) {
+def applyRoles(final String compName, roles, ComponentRepresentation component, RealmResource realmResource, log, comm) {
 
     ComponentRepresentation compPres = new ComponentRepresentation()
     //Add new ldap component
@@ -22,18 +23,24 @@ def applyRoles(final String compName, roles, ComponentRepresentation component, 
 
     if (roles) {
         compPres.config.role = roles
-        comm.checkResponse(realmResource.components().add(compPres), "Applying roles", rp)
+        List<ComponentRepresentation> list = realmResource.components().query(component.id, compPres.providerType, compPres.name)
+
+        if (list && list.size() > 0) {
+            log.info("Role ${component.name} yet installed")
+        } else {
+            comm.checkResponse(realmResource.components().add(compPres), "Applying role  ${component.name}", log)
+        }
     }
 }
 
 
-def triggerUpdate(ComponentRepresentation component, RealmResource realmResource, rp, comH) {
+def triggerUpdate(ComponentRepresentation component, RealmResource realmResource, log, comH) {
     SynchronizationResultRepresentation syncResult = realmResource.userStorage().syncUsers(component.id, "triggerFullSync")
 
     if (syncResult && (syncResult.added > 0 || syncResult.updated > 0)) {
-        rp.add(new Report("Federation ${component.name} synchronisation: ${syncResult.status}", Report.Status.Success)).start().stop()
+        log.info("Federation ${component.name} synchronisation: ${syncResult.status}")
     } else {
-        rp.add(new Report("Federation ${component.name} synchronisation", Report.Status.Fail)).start().stop()
+        log.error("Federation ${component.name} synchronisation")
     }
 }
 
