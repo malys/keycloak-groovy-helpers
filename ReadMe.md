@@ -5,7 +5,6 @@ Provide helpers to consume Keycloak admin client (**v3.4.x**) in groovy with [Ly
 ## Example
 
 ```groovy
-import com.lyra.deployer.data.Report
 import org.keycloak.admin.client.Keycloak
 import org.keycloak.representations.idm.UserRepresentation
 
@@ -45,9 +44,3 @@ if (result != null && result.size() > 0) {
     println("User ${result.get(0).username} detected")
 }
 ```
-
-
-
-
-
->3.4
