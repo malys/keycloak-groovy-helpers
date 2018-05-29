@@ -16,7 +16,7 @@ def createClient(
 
     //security
     if (System.getProperty("SECURITY") == "OFF") {
-        log.warn("SECURITY OFF")
+        log.info("SECURITY OFF !!!!!!")
     } else {
         boolean found = (redirectUri.find { uri -> (uri.indexOf("*") > -1) } != null)
         found = found || (webOrigin.find { uri -> (uri.indexOf("*") > -1) } != null)

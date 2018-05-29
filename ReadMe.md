@@ -17,7 +17,6 @@ Keycloak k = kc
 String cRealm = currentRealm
 String cClient = currentClient
 String cUser = currentUser
-Path p = scriptPath
 
 //load scripts
 comH = new commonHelper()

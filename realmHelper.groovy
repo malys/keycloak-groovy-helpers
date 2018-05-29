@@ -1,6 +1,5 @@
 package helpers
 
-import com.lyra.deployer.data.Report
 import org.keycloak.admin.client.Keycloak
 import org.keycloak.admin.client.resource.RealmResource
 import org.keycloak.admin.client.resource.RolesResource
@@ -11,7 +10,7 @@ import org.keycloak.representations.idm.RoleRepresentation
 /**
  * RH-SSO Realm helpers
  */
-def createRealm(final String realmName, final String sslReq, Keycloak k, log, comH) {
+def createRealm(final String realmName, final String sslReq, String noreply, Keycloak k, log, comH) {
     RealmRepresentation real = new RealmRepresentation()
     real.with {
         id = realmName
@@ -20,13 +19,15 @@ def createRealm(final String realmName, final String sslReq, Keycloak k, log, co
         bruteForceProtected = true
         failureFactor = 10
         offlineSessionIdleTimeout = 43200 // 12hours
-        sslRequired = "all"
+        sslRequired = "external"
         eventsEnabled = true
         eventsExpiration = 43200 // 12hours
         adminEventsEnabled = true
         adminEventsDetailsEnabled = true
+        smtpServer = [auth: "", from: noreply, host: "localhost", port: null, ssl: "", starttls: ""]
 
     }
+
     if (sslReq) {
         real.sslRequired = sslReq //external
     }
@@ -55,11 +56,11 @@ def createRealm(final String realmName, final String sslReq, Keycloak k, log, co
 }
 
 
-def add(final String realmName, final String sslReq,
+def add(final String realmName, final String sslReq, final String noReply,
         final String roleName, final String descriptio, Map<String, List<String>> composits,
         Keycloak k, log, comH) {
 
-    RealmResource realmResource = createRealm(realmName, sslReq, k, log, comH)
+    RealmResource realmResource = createRealm(realmName, sslReq, noReply, k, log, comH)
 
     addRole(roleName, descriptio, composits, realmResource, log, comH)
 
@@ -112,7 +113,7 @@ def getRolesRepresentation(final Map<String, List<String>> composits,
     composits.each { String clientName, List<String> roleNames ->
         List<ClientRepresentation> clients = realmResource.clients().findByClientId(clientName)
         if (clients && clients.size() > 0) {
-            list.addAll(realmResource.clients().get(clients.get(0).id).roles().list().findAll {
+            list.addAll(realmResource.clients().get(clients.get(0).id).roles().list().findAll { it ->
                 roleNames.contains(it.name)
             })
         }
