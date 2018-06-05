@@ -21,6 +21,7 @@ def createRealm(final String realmName, final String sslReq, String noreply, Key
         offlineSessionIdleTimeout = 43200 // 12hours
         sslRequired = "external"
         eventsEnabled = true
+        eventsListeners=["logDetail"]
         eventsExpiration = 43200 // 12hours
         adminEventsEnabled = true
         adminEventsDetailsEnabled = true
