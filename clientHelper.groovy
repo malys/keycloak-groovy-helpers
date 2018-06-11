@@ -1,12 +1,14 @@
 package helpers
 
+import groovy.json.JsonSlurper
 import org.keycloak.admin.client.resource.RealmResource
 import org.keycloak.representations.idm.ClientRepresentation
+
 /**
  * RH-SSO Client helpers
  */
 def createClient(
-        final String clientName,
+        final String clientNam,
         final Boolean directAccessGrantsEnab,
         final Boolean publicClien,
         final Boolean bearerOnl,
@@ -24,6 +26,8 @@ def createClient(
             comH.securityAlert("redirectUri or webOrigin have to not contain '*'")
         }
     }
+
+    String clientName=comH.applyNomenclature(clientNam)
 
     ClientRepresentation client = new ClientRepresentation()
     client.with {
@@ -50,3 +54,31 @@ def createClient(
 
     return client
 }
+
+def createClient(
+        final String clientName,
+        final Boolean directAccessGrantsEnab,
+        final Boolean publicClien,
+        final Boolean bearerOnl,
+        final String redirectUri,
+        final String webOrigin,
+        RealmResource realmResource, log, comH) {
+
+    def jsonSlurper = new JsonSlurper()
+
+    List<String>redirectUriP
+    List<String> webOriginP
+
+    if(redirectUri) redirectUriP= jsonSlurper.parseText(redirectUri)
+    if(redirectUri) webOriginP= jsonSlurper.parseText(webOrigin)
+
+    return createClient(
+            clientName,
+            directAccessGrantsEnab,
+            publicClien,
+            bearerOnl,
+            redirectUriP,
+            webOriginP,
+            realmResource, log, comH)
+}
+

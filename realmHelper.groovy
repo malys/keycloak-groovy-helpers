@@ -10,7 +10,9 @@ import org.keycloak.representations.idm.RoleRepresentation
 /**
  * RH-SSO Realm helpers
  */
-def createRealm(final String realmName, final String sslReq, String noreply, Keycloak k, log, comH) {
+def createRealm(final String realmNam, final String sslReq, String noreply, Keycloak k, log, comH) {
+    String realmName=comH.applyNomenclature(realmNam)
+
     RealmRepresentation real = new RealmRepresentation()
     real.with {
         id = realmName
