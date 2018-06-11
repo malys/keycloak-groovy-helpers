@@ -1,7 +1,4 @@
 package helpers
-
-import com.lyra.deployer.data.Report
-
 /**
  * RH-SSO Common helpers
  */
@@ -30,6 +27,12 @@ def debug(String message) {
 def securityAlert(String message) {
     System.err.println("SECURITY BREACH !!: ${message}")
     System.exit(2)
+}
+
+def applyNomenclature(String name){
+    String pattern=/[!$%^&*()_+|~=`{}\[\]:";'<>?,.\/]/
+    if(name ==~ pattern) securityAlert("Not allowed character in ${name}")
+    return name.toLowerCase()
 }
 
 
