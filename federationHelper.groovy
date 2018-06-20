@@ -1,11 +1,9 @@
 package helpers
 
-import com.lyra.deployer.data.Report
 import org.keycloak.admin.client.resource.RealmResource
 import org.keycloak.common.util.MultivaluedHashMap
 import org.keycloak.representations.idm.ComponentRepresentation
 import org.keycloak.representations.idm.SynchronizationResultRepresentation
-
 /**
  * RH-SSO Federation helpers
  */

@@ -10,29 +10,32 @@ import org.keycloak.representations.idm.RoleRepresentation
 /**
  * RH-SSO Realm helpers
  */
-def createRealm(final String realmNam, final String sslReq, String noreply, Keycloak k, log, comH) {
-    String realmName=comH.applyNomenclature(realmNam)
+def createRealm(final Map conf, Keycloak k, log, comH) {
+    String realmName = comH.applyNomenclature(conf.realm)
 
     RealmRepresentation real = new RealmRepresentation()
     real.with {
-        id = realmName
-        realm = realmName
+        id = conf.realm
+        realm = conf.realm
         enabled = true
         bruteForceProtected = true
         failureFactor = 10
         offlineSessionIdleTimeout = 43200 // 12hours
         sslRequired = "external"
         eventsEnabled = true
-        eventsListeners=["logDetail"]
+        eventsListeners = ["logDetail"]
         eventsExpiration = 43200 // 12hours
         adminEventsEnabled = true
         adminEventsDetailsEnabled = true
-        smtpServer = [auth: "", from: noreply, host: "localhost", port: null, ssl: "", starttls: ""]
-
-    }
-
-    if (sslReq) {
-        real.sslRequired = sslReq //external
+        smtpServer = [auth: "", from: conf.noReply, host: "localhost", port: null, ssl: "", starttls: ""]
+        internationalizationEnabled = conf.internationalizationEnabled ? conf.internationalizationEnabled : false
+        loginWithEmailAllowed = conf.loginWithEmailAllowed ? conf.loginWithEmailAllowed : false
+        registrationAllowed = conf.registrationAllowed ? conf.registrationAllowed : false
+        registrationEmailAsUsername = conf.registrationEmailAsUsername ? conf.registrationEmailAsUsername : false
+        rememberMe = conf.rememberMe ? conf.rememberMe : false
+        resetPasswordAllowed = conf.resetPasswordAllowed ? conf.resetPasswordAllowed : false
+        verifyEmail = conf.verifyEmail ? conf.verifyEmail : false
+        sslRequired = conf.sslRequired ? conf.sslRequired : "external"
     }
 
     RealmResource realmResource = null
@@ -59,11 +62,11 @@ def createRealm(final String realmNam, final String sslReq, String noreply, Keyc
 }
 
 
-def add(final String realmName, final String sslReq, final String noReply,
+def add(final Map conf,
         final String roleName, final String descriptio, Map<String, List<String>> composits,
         Keycloak k, log, comH) {
 
-    RealmResource realmResource = createRealm(realmName, sslReq, noReply, k, log, comH)
+    RealmResource realmResource = createRealm(conf, k, log, comH)
 
     addRole(roleName, descriptio, composits, realmResource, log, comH)
 
