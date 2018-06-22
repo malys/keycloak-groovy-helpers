@@ -69,8 +69,8 @@ def createClient(
     List<String>redirectUriP
     List<String> webOriginP
 
-    if(redirectUri) redirectUriP= jsonSlurper.parseText(redirectUri)
-    if(redirectUri) webOriginP= jsonSlurper.parseText(webOrigin)
+    if(redirectUri) redirectUriP= jsonSlurper.parseText(redirectUri.replaceAll("'","\""))
+    if(redirectUri) webOriginP= jsonSlurper.parseText(webOrigin.replaceAll("'","\""))
 
     return createClient(
             clientName,
