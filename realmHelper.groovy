@@ -38,6 +38,11 @@ def createRealm(final Map conf, Keycloak k, log, comH) {
         sslRequired = conf.sslRequired ? conf.sslRequired : "external"
     }
 
+    if (conf.loginTheme) real.loginTheme = conf.loginTheme
+    if (conf.accountTheme) real.accountTheme = conf.accountTheme
+    if (conf.adminTheme) real.adminTheme = conf.adminTheme
+    if (conf.emailTheme) real.emailTheme = conf.emailTheme
+
     RealmResource realmResource = null
     try {
         realmResource = k.realm(realmName)
