@@ -21,7 +21,6 @@ def createRealm(final Map conf, Keycloak k, log, comH) {
         bruteForceProtected = true
         failureFactor = 10
         offlineSessionIdleTimeout = 43200 // 12hours
-        sslRequired = "external"
         eventsEnabled = true
         eventsListeners = ["logDetail"]
         eventsExpiration = 43200 // 12hours
@@ -35,7 +34,7 @@ def createRealm(final Map conf, Keycloak k, log, comH) {
         rememberMe = conf.rememberMe ? conf.rememberMe : false
         resetPasswordAllowed = conf.resetPasswordAllowed ? conf.resetPasswordAllowed : false
         verifyEmail = conf.verifyEmail ? conf.verifyEmail : false
-        sslRequired = conf.sslRequired ? conf.sslRequired : "external"
+        sslRequired = conf.sslRequired ? conf.sslRequired : "none" // For AJP:(
     }
 
     if (conf.loginTheme) real.loginTheme = conf.loginTheme
