@@ -1,11 +1,10 @@
 package helpers
 
-import com.lyra.deployer.data.Report
+
 import org.keycloak.admin.client.resource.RealmResource
 import org.keycloak.common.util.MultivaluedHashMap
 import org.keycloak.representations.idm.ComponentRepresentation
 import org.keycloak.representations.idm.RealmRepresentation
-
 /**
  * LDAP federation helpers
  */
@@ -41,7 +40,7 @@ def createFederation(final String fedName, String customFilter, RealmResource re
             connectionUrl = ["ldaps://" + prop["LDAP_HOST"]]
             usersDn = ["cn=users,cn=accounts," + prop["LDAP_CONTEXT"]]
             authType = ["simple"]
-            bindDn = [prop["LDAP_LOGIN"] + prop["LDAP_CONTEXT"]]
+            bindDn = [prop["LDAP_LOGIN"]]
             bindCredential = [prop["LDAP_PW"]]
             searchScope = ["1"]
             useTruststoreSpi = ["ldapsOnly"]

@@ -18,7 +18,7 @@ String cRealm = currentRealm
 String cClient = currentClient
 String cUser = currentUser
 
-//load scripts
+//load com.lyra.scripts
 comH = new commonHelper()
 ldapH = new ldapHelper()
 fedH = new federationHelper()
