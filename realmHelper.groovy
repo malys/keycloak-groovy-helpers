@@ -10,6 +10,16 @@ import org.keycloak.representations.idm.RoleRepresentation
 /**
  * RH-SSO Realm helpers
  */
+def updateEventsRealm( RealmRepresentation real){
+    real.with {
+        eventsEnabled = true
+        eventsListeners = ["logDetail"]
+        eventsExpiration = 43200 // 12hours
+        adminEventsEnabled = true
+        adminEventsDetailsEnabled = true
+    }
+}
+
 def createRealm(final Map conf, Keycloak k, log, comH) {
     String realmName = comH.applyNomenclature(conf.realm)
 
@@ -21,11 +31,6 @@ def createRealm(final Map conf, Keycloak k, log, comH) {
         bruteForceProtected = true
         failureFactor = 10
         offlineSessionIdleTimeout = 43200 // 12hours
-        eventsEnabled = true
-        eventsListeners = ["logDetail"]
-        eventsExpiration = 43200 // 12hours
-        adminEventsEnabled = true
-        adminEventsDetailsEnabled = true
         smtpServer = [auth: "", from: conf.noReply, host: "localhost", port: null, ssl: "", starttls: ""]
         internationalizationEnabled = conf.internationalizationEnabled ? conf.internationalizationEnabled : false
         loginWithEmailAllowed = conf.loginWithEmailAllowed ? conf.loginWithEmailAllowed : false
@@ -36,6 +41,8 @@ def createRealm(final Map conf, Keycloak k, log, comH) {
         verifyEmail = conf.verifyEmail ? conf.verifyEmail : false
         sslRequired = conf.sslRequired ? conf.sslRequired : "none" // For AJP:(
     }
+
+    updateEventsRealm(real)
 
     if (conf.loginTheme) real.loginTheme = conf.loginTheme
     if (conf.accountTheme) real.accountTheme = conf.accountTheme
