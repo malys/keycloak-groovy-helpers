@@ -20,14 +20,14 @@ def createClient(
     if (System.getProperty("SECURITY") == "OFF") {
         log.info("SECURITY OFF !!!!!!")
     } else {
-        boolean found = (redirectUri.find { uri -> (uri.indexOf("*") > -1) } != null)
-        found = found || (webOrigin.find { uri -> (uri.indexOf("*") > -1) } != null)
+        boolean found = (redirectUri.find { uri -> uri == "*" } != null)
+        found = found || (webOrigin.find { uri -> uri == "*" } != null)
         if (found) {
             comH.securityAlert("redirectUri or webOrigin have to not contain '*'")
         }
     }
 
-    String clientName=comH.applyNomenclature(clientNam)
+    String clientName = comH.applyNomenclature(clientNam)
 
     ClientRepresentation client = new ClientRepresentation()
     client.with {
@@ -66,11 +66,11 @@ def createClient(
 
     def jsonSlurper = new JsonSlurper()
 
-    List<String>redirectUriP
+    List<String> redirectUriP
     List<String> webOriginP
 
-    if(redirectUri) redirectUriP= jsonSlurper.parseText(redirectUri.replaceAll("'","\""))
-    if(redirectUri) webOriginP= jsonSlurper.parseText(webOrigin.replaceAll("'","\""))
+    if (redirectUri) redirectUriP = jsonSlurper.parseText(redirectUri.replaceAll("'", "\""))
+    if (redirectUri) webOriginP = jsonSlurper.parseText(webOrigin.replaceAll("'", "\""))
 
     return createClient(
             clientName,
