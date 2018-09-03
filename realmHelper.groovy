@@ -10,7 +10,7 @@ import org.keycloak.representations.idm.RoleRepresentation
 /**
  * RH-SSO Realm helpers
  */
-def updateEventsRealm( RealmRepresentation real){
+def updateEventsRealm(RealmRepresentation real) {
     real.with {
         eventsEnabled = true
         eventsListeners = ["logDetail"]
@@ -18,6 +18,10 @@ def updateEventsRealm( RealmRepresentation real){
         adminEventsEnabled = true
         adminEventsDetailsEnabled = true
     }
+}
+
+def updateSMTP(noReply,RealmRepresentation real) {
+    real.smtpServer = [auth: "", from: noReply, host: "localhost", port: null, ssl: "", starttls: ""]
 }
 
 def createRealm(final Map conf, Keycloak k, log, comH) {
@@ -31,7 +35,6 @@ def createRealm(final Map conf, Keycloak k, log, comH) {
         bruteForceProtected = true
         failureFactor = 10
         offlineSessionIdleTimeout = 43200 // 12hours
-        smtpServer = [auth: "", from: conf.noReply, host: "localhost", port: null, ssl: "", starttls: ""]
         internationalizationEnabled = conf.internationalizationEnabled ? conf.internationalizationEnabled : false
         loginWithEmailAllowed = conf.loginWithEmailAllowed ? conf.loginWithEmailAllowed : false
         registrationAllowed = conf.registrationAllowed ? conf.registrationAllowed : false
@@ -39,9 +42,9 @@ def createRealm(final Map conf, Keycloak k, log, comH) {
         rememberMe = conf.rememberMe ? conf.rememberMe : false
         resetPasswordAllowed = conf.resetPasswordAllowed ? conf.resetPasswordAllowed : false
         verifyEmail = conf.verifyEmail ? conf.verifyEmail : false
-        sslRequired = conf.sslRequired ? conf.sslRequired : "none" // For AJP:(
+        sslRequired = conf.sslRequired ? conf.sslRequired : "all" // for security
     }
-
+    updateSMTP(conf.noReply, real)
     updateEventsRealm(real)
 
     if (conf.loginTheme) real.loginTheme = conf.loginTheme
