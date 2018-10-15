@@ -1,13 +1,86 @@
 package helpers
 
+import org.keycloak.admin.client.resource.GroupResource
 import org.keycloak.admin.client.resource.RealmResource
 import org.keycloak.common.util.MultivaluedHashMap
 import org.keycloak.representations.idm.ComponentRepresentation
+import org.keycloak.representations.idm.GroupRepresentation
+import org.keycloak.representations.idm.RoleRepresentation
 import org.keycloak.representations.idm.SynchronizationResultRepresentation
+
 /**
  * RH-SSO Federation helpers
  */
-def applyRoles(final String compName, roles, ComponentRepresentation component, RealmResource realmResource, log, comm) {
+
+/**
+ * LDAP group mapper synchronization
+ */
+def applyGroupMapper(final String compName, groupsLdap, ComponentRepresentation component, RealmResource realmResource, log,comH) {
+    ComponentRepresentation compPres = new ComponentRepresentation()
+    //Import groups
+    compPres.with {
+        name = compName
+        providerId = "group-ldap-mapper"
+        providerType = "org.keycloak.storage.ldap.mappers.LDAPStorageMapper"
+        parentId = component.id
+        config = new MultivaluedHashMap<>()
+        config['drop.non.existing.groups.during.sync'] = ["false"]
+        config['group.name.ldap.attribute'] = ["cn"]
+        config['group.object.classes'] = ["groupOfNames"]
+        config['groups.dn'] = [groupsLdap] //cn=groups,cn=accounts,...
+        config['groups.ldap.filter'] = []
+        config['ignore.missing.groups'] = ["true"]
+        config['mapped.group.attributes'] = []
+        config['memberof.ldap.attribute'] = ["memberOf"]
+        config['membership.attribute.type'] = ["DN"]
+        config['membership.ldap.attribute'] = ["member"]
+        config['membership.user.ldap.attribute'] = ["uid"]
+        config['mode'] = ["READ_ONLY"]
+        config['preserve.group.inheritance'] = ["false"]
+        config['user.roles.retrieve.strategy'] = ["LOAD_GROUPS_BY_MEMBER_ATTRIBUTE"]
+    }
+
+    comH.checkResponse(realmResource.components().add(compPres), "Component $compName created", log)
+
+    List<ComponentRepresentation> components = realmResource.components().query(component.id,
+            "org.keycloak.storage.ldap.mappers.LDAPStorageMapper",
+            compName)
+
+
+    //Synchronization
+    SynchronizationResultRepresentation syncResult = realmResource.userStorage().syncMapperData(component.id,  components.get(0).id, "fedToKeycloak")
+
+    if (syncResult && (syncResult.added > 0 || syncResult.updated > 0)) {
+        log.info("Group ${component.name} synchronisation: ${syncResult.status}")
+    } else {
+        log.error("Group ${component.name} synchronisation")
+    }
+}
+
+/**
+ * Set role to group
+ */
+def applyRoleToGroup(String groupName, String roleName, RealmResource realmResource, log, comH) {
+    try {
+        RoleRepresentation role = realmResource.roles().get(roleName).toRepresentation()
+        GroupRepresentation groupR=realmResource.groups().groups(groupName,0,1)[0]
+        realmResource.groups().group(groupR.id).roles().realmLevel().add([role])
+
+        log.info("Set ${roleName} to ${groupName} group")
+    } catch (Exception e) {
+        log.error("Role $roleName added to ${groupName}:" + e.message)
+    }
+}
+
+def applyRoles(final String roleCompName,String groupsLdap, Map<String,String> groupRoles, ComponentRepresentation component, RealmResource realmResource, log, comH) {
+    //Import LDAP group
+    applyGroupMapper(roleCompName, groupsLdap, component, realmResource, log,comH)
+
+    // Affect ex: [ldapAdmin: "ldap-admin-roles"]
+    if (groupRoles) groupRoles.each { k, v -> applyRoleToGroup(k, v, realmResource, log, comH) }
+}
+
+def hardRoles(final String compName, roles, ComponentRepresentation component, RealmResource realmResource, log, comH) {
 
     ComponentRepresentation compPres = new ComponentRepresentation()
     //Add new ldap component

@@ -5,6 +5,7 @@ import org.keycloak.admin.client.resource.RealmResource
 import org.keycloak.common.util.MultivaluedHashMap
 import org.keycloak.representations.idm.ComponentRepresentation
 import org.keycloak.representations.idm.RealmRepresentation
+
 /**
  * LDAP federation helpers
  */
@@ -93,7 +94,14 @@ def createFederation(final String fedName, String customFilter, RealmResource re
 }
 
 // one task all step
-def add(String fedName, String customFilter, String roleCompName, roles, RealmResource realmResource, log, comH, fedH, prop) {
+def add(String fedName,
+        String customFilter,
+        String groupsLdap,
+        groupRoles,
+        RealmResource realmResource,
+        log, comH, fedH, prop) {
+
+    def roleCompName = " ${fedName}-roles"
     comH.debug("add LDAP $fedName $customFilter $roleCompName")
     ComponentRepresentation component = createFederation(
             fedName,
@@ -104,7 +112,7 @@ def add(String fedName, String customFilter, String roleCompName, roles, RealmRe
             prop
     )
 
-    fedH.applyRoles(roleCompName, roles, component, realmResource, log, comH)
+    fedH.applyRoles(roleCompName,groupsLdap, groupRoles,  component, realmResource, log, comH)
 
     fedH.triggerUpdate(component, realmResource, log, comH)
 
