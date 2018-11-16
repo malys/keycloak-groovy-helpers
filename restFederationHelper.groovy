@@ -45,7 +45,7 @@ def createFederation(final Map conf, RealmResource realmResource, log, comm) {
             evictionMinute = []
             maxLifespan = []
             proxy_enabled = [conf.proxy_enabled]
-            not_create_users == conf.not_create_users
+            not_create_users = [conf.not_create_users]
         }
 
 
