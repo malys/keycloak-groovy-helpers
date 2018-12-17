@@ -12,6 +12,7 @@ def createClient(
         final Boolean directAccessGrantsEnab,
         final Boolean publicClien,
         final Boolean bearerOnl,
+        final Boolean fullScopeAllowe,
         final List<String> redirectUri,
         final List<String> webOrigin,
         RealmResource realmResource, log, comH) {
@@ -33,10 +34,15 @@ def createClient(
     client.with {
         clientId = clientName
         directAccessGrantsEnabled = false
+        fullScopeAllowed = false
         redirectUris = redirectUri
         webOrigins = webOrigin
         publicClient = publicClien
         bearerOnly = bearerOnl
+    }
+
+    if (fullScopeAllowe) {
+        client.fullScopeAllowed = fullScopeAllowe
     }
 
     if (directAccessGrantsEnab) {
@@ -60,6 +66,7 @@ def createClient(
         final Boolean directAccessGrantsEnab,
         final Boolean publicClien,
         final Boolean bearerOnl,
+        final Boolean fullScopeAllowe,
         final String redirectUri,
         final String webOrigin,
         RealmResource realmResource, log, comH) {
@@ -77,6 +84,7 @@ def createClient(
             directAccessGrantsEnab,
             publicClien,
             bearerOnl,
+            fullScopeAllowe,
             redirectUriP,
             webOriginP,
             realmResource, log, comH)
