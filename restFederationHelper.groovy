@@ -2,13 +2,12 @@ package helpers
 
 import org.keycloak.admin.client.resource.RealmResource
 import org.keycloak.common.util.MultivaluedHashMap
+import org.keycloak.representations.idm.ComponentRepresentation
+import org.keycloak.representations.idm.RealmRepresentation
 
 /**
  * RH-SSO Rest Federation helpers
  */
-import org.keycloak.representations.idm.ComponentRepresentation
-import org.keycloak.representations.idm.RealmRepresentation
-
 def createFederation(final Map conf, RealmResource realmResource, log, comm) {
     RealmRepresentation realm = realmResource.toRepresentation()
 
@@ -46,9 +45,10 @@ def createFederation(final Map conf, RealmResource realmResource, log, comm) {
             maxLifespan = []
             proxy_enabled = [conf.proxy_enabled]
             not_create_users = [conf.not_create_users]
+            by_pass = [conf.by_pass]
         }
 
-
+        log.info(compPres.config.toMapString())
         comm.checkResponse(realmResource.components().add(compPres), "Component ${conf.name} created", log)
         components = realmResource.components().query(realm.getId(),
                 "org.keycloak.storage.UserStorageProvider",
