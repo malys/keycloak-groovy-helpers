@@ -34,6 +34,7 @@ def createClient(
     client.with {
         clientId = clientName
         directAccessGrantsEnabled = false
+        loginWithEmailAllowed = false
         fullScopeAllowed = false
         redirectUris = redirectUri
         webOrigins = webOrigin
