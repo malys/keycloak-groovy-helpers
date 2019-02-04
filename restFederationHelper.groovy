@@ -37,6 +37,7 @@ def createFederation(final Map conf, RealmResource realmResource, log, comm) {
             uncheck_federation = [conf.uncheck_federation]
             changedSyncPeriod = [conf.changedSyncPeriod] // -1 for disabling
             role_sync = [conf.role_sync]
+            role_client_sync = [conf.role_client_sync]
             attr_sync = [conf.attr_sync]
             reset_action = [conf.reset_action]
             evictionDay = []
