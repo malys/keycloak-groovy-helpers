@@ -1,12 +1,16 @@
 package helpers
 
 import groovy.json.JsonSlurper
+import groovy.transform.Field
+import org.keycloak.admin.client.resource.ClientResource
 import org.keycloak.admin.client.resource.ClientTemplateResource
 import org.keycloak.admin.client.resource.RealmResource
+import org.keycloak.admin.client.resource.RolesResource
 import org.keycloak.common.util.MultivaluedHashMap
 import org.keycloak.representations.idm.ClientRepresentation
 import org.keycloak.representations.idm.ClientTemplateRepresentation
 import org.keycloak.representations.idm.ProtocolMapperRepresentation
+import org.keycloak.representations.idm.RoleRepresentation
 
 import javax.ws.rs.NotFoundException
 
@@ -165,7 +169,7 @@ def createClientTemplate(final Map conf,
     return client
 }
 
-def createAPIClientTemplate(redirect, webOrigin, RealmResource realmResource, log, comH) {
+def createAPIClientTemplate(RealmResource realmResource, log, realmH, comH) {
     def SERVICE_NAME = "api-service"
 
     List<ProtocolMapperRepresentation> protocolMappers = new ArrayList<>()
@@ -216,7 +220,7 @@ def createAPIClientTemplate(redirect, webOrigin, RealmResource realmResource, lo
         config["jsonType.label"] = "String"
     }
 
-    def CLIENT_TEMPLATE = "api-key"
+
     ClientTemplateRepresentation clientTemplate = createClientTemplate([
             name                     : CLIENT_TEMPLATE,
             description              : "Template to allowed API use case.",
@@ -263,5 +267,68 @@ def createAPIClientTemplate(redirect, webOrigin, RealmResource realmResource, lo
     ],
             realmResource, log, comH)
 
+    def MAINTAINER = "maintainer"
+    ClientRepresentation maintainer = createClient([
+            name                     : MAINTAINER,
+            fullScopeAllowed         : false,
+            bearerOnly               : false,
+            consentRequired          : false,
+            standardFlowEnabled      : false,
+            implicitFlowEnabled      : false,
+            directAccessGrantsEnabled: false,
+            serviceAccountsEnabled   : true,
+            publicClient             : false
+    ],
+            realmResource, log, comH)
+
+    addRole("api-admin", "Manage API key", ["realm-management": [
+            "create-client",
+            "view-clients",
+            "query-clients",
+            "manage-clients"
+    ]], realmResource, MAINTAINER, log, realmH, comH)
+
     return clientTemplate
 }
+
+
+def addRole(final String roleName,
+            final String descriptio,
+            Map<String, List<String>> composits,
+            RealmResource realmResource,
+            String clientName,
+            log, realmH, comH) {
+
+    List<ClientRepresentation> clients = realmResource.clients().findByClientId(clientName)
+
+    ClientResource clientResource = realmResource.clients().get(clients[0].id)
+    RolesResource roleRes = clientResource.roles()
+    RoleRepresentation role
+
+    if (roleRes && roleRes.list()) {
+        role = roleRes.list().find {
+            RoleRepresentation r ->
+                r.name == roleName
+        }
+    }
+    if (role == null) {
+        role = new RoleRepresentation()
+        role.with {
+            id = roleName
+            name = roleName
+            description = descriptio
+        }
+
+        if (composits) {
+            role.composite = true
+        }
+        clientResource.roles().create(role)
+        role = clientResource.roles().get(roleName).toRepresentation()
+        if (composits) {
+            realmResource.rolesById().addComposites(role.getId(), realmH.getRolesRepresentation(composits, realmResource))
+        }
+    }
+    return role
+}
+
+@Field def CLIENT_TEMPLATE = "api-key"
