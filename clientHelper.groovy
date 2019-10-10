@@ -46,6 +46,7 @@ def createClient(final Map conf,
         standardFlowEnabled = conf.standardFlowEnabled
         implicitFlowEnabled = conf.implicitFlowEnabled
         serviceAccountsEnabled = conf.serviceAccountsEnabled
+        description = conf.description
     }
 
     if (conf.fullScopeAllowed) {
@@ -181,8 +182,8 @@ def createAPIClientTemplate(RealmResource realmResource, log, realmH, comH) {
         consentRequired = false
         config = new MultivaluedHashMap<>()
         config["user.session.note"] = "clientId"
-        config["id.token.claim"] = "true"
-        config["access.token.claim"] = "true"
+        config["userinfo.token.claim"] = "false"
+        config["id.token.claim"] = "false"
         config["claim.name"] = "preferred_username"
         config["jsonType.label"] = "String"
 
@@ -196,8 +197,8 @@ def createAPIClientTemplate(RealmResource realmResource, log, realmH, comH) {
         consentRequired = false
         config = new MultivaluedHashMap<>()
         config["claim.value"] = SERVICE_NAME
-        config["userinfo.token.claim"] = "true"
-        config["id.token.claim"] = "true"
+        config["userinfo.token.claim"] = "false"
+        config["id.token.claim"] = "false"
         config["access.token.claim"] = "true"
         config["claim.name"] = "azp"
         config["jsonType.label"] = "String"
@@ -213,8 +214,8 @@ def createAPIClientTemplate(RealmResource realmResource, log, realmH, comH) {
         consentRequired = false
         config = new MultivaluedHashMap<>()
         config["claim.value"] = SERVICE_NAME
-        config["userinfo.token.claim"] = "true"
-        config["id.token.claim"] = "true"
+        config["userinfo.token.claim"] = "false"
+        config["id.token.claim"] = "false"
         config["access.token.claim"] = "true"
         config["claim.name"] = "aud"
         config["jsonType.label"] = "String"
@@ -241,6 +242,7 @@ def createAPIClientTemplate(RealmResource realmResource, log, realmH, comH) {
 
     createClient([
             name                     : SERVICE_NAME,
+            description              :"Generic client for API key service",
             fullScopeAllowed         : false,
             bearerOnly               : false,
             consentRequired          : false,
@@ -255,6 +257,7 @@ def createAPIClientTemplate(RealmResource realmResource, log, realmH, comH) {
 
     createClient([
             name                     : "monitoring",
+            description              : "API key for monitoring",
             clientTemplate           : CLIENT_TEMPLATE,
             fullScopeAllowed         : false,
             bearerOnly               : false,
@@ -270,6 +273,7 @@ def createAPIClientTemplate(RealmResource realmResource, log, realmH, comH) {
     def MAINTAINER = "maintainer"
     ClientRepresentation maintainer = createClient([
             name                     : MAINTAINER,
+            description              : "Client to maintain (CRUD) API keys",
             fullScopeAllowed         : false,
             bearerOnly               : false,
             consentRequired          : false,
