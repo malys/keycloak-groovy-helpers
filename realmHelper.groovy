@@ -11,6 +11,7 @@ import org.keycloak.representations.idm.RoleRepresentation
  * RH-SSO Realm helpers
  */
 def updateEventsRealm(RealmRepresentation real) {
+    if("ON".equals(System.getProperty("MOCK"))) return
     real.with {
         eventsEnabled = true
         eventsListeners = ["logDetail"]
@@ -44,6 +45,8 @@ def createRealm(final Map conf, Keycloak k, log, comH) {
         verifyEmail = conf.verifyEmail ? conf.verifyEmail : false
         sslRequired = conf.sslRequired ? conf.sslRequired : "all" // for security
     }
+    if ("ON" == System.getProperty("MOCK")) real.sslRequired='none'
+
     updateSMTP(conf.noReply, real)
     updateEventsRealm(real)
 

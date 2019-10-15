@@ -15,6 +15,7 @@ import org.keycloak.representations.idm.SynchronizationResultRepresentation
  * LDAP group mapper synchronization
  */
 def applyGroupMapper(final String compName, groupsLdap, ComponentRepresentation component, RealmResource realmResource, log, comH) {
+    if("ON" == System.getProperty("MOCK")) return
     ComponentRepresentation compPres = new ComponentRepresentation()
     //Import groups
     compPres.with {
@@ -65,6 +66,7 @@ def applyGroupMapper(final String compName, groupsLdap, ComponentRepresentation 
  * Set role to group
  */
 def applyRoleToGroup(String groupName, String roleName, RealmResource realmResource, log, comH) {
+    if("ON" == System.getProperty("MOCK")) return
     try {
         RoleRepresentation role = realmResource.roles().get(roleName).toRepresentation()
         GroupRepresentation groupR = realmResource.groups().groups(groupName, 0, 1)[0]
@@ -77,6 +79,7 @@ def applyRoleToGroup(String groupName, String roleName, RealmResource realmResou
 }
 
 def applyRoles(final String roleCompName, String groupsLdap, Map<String, String> groupRoles, ComponentRepresentation component, RealmResource realmResource, log, comH) {
+    if("ON" == System.getProperty("MOCK")) return
     //Import LDAP group
     applyGroupMapper(roleCompName, groupsLdap, component, realmResource, log, comH)
 
@@ -85,7 +88,7 @@ def applyRoles(final String roleCompName, String groupsLdap, Map<String, String>
 }
 
 def hardRoles(final String compName, roles, ComponentRepresentation component, RealmResource realmResource, log, comH) {
-
+    if("ON" == System.getProperty("MOCK")) return
     ComponentRepresentation compPres = new ComponentRepresentation()
     //Add new ldap component
     compPres.with {
@@ -110,6 +113,7 @@ def hardRoles(final String compName, roles, ComponentRepresentation component, R
 
 
 def triggerUpdate(ComponentRepresentation component, RealmResource realmResource, log, comH) {
+    if("ON" == System.getProperty("MOCK")) return
     SynchronizationResultRepresentation syncResult = realmResource.userStorage().syncUsers(component.id, "triggerFullSync")
 
     if (syncResult && (syncResult.added > 0 || syncResult.updated > 0)) {

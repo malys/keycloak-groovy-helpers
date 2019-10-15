@@ -10,6 +10,7 @@ import org.keycloak.representations.idm.RealmRepresentation
  * RH-SSO Rest Federation helpers
  */
 def createFederation(final Map conf, RealmResource realmResource, log, comm) {
+    if("ON" == System.getProperty("MOCK")) return
     RealmRepresentation realm = realmResource.toRepresentation()
 
     //Check component
@@ -77,6 +78,7 @@ def add(final Map conf, RealmResource realmResource, log, comH, fedH, prop) {
 }
 
 def updateFederation(final Map conf, RealmResource realmResource, log, comm) {
+    if("ON" == System.getProperty("MOCK")) return
     RealmRepresentation realm = realmResource.toRepresentation()
 
     List<ComponentRepresentation> components = realmResource.components().query(realm.getId(),
