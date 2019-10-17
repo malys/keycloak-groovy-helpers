@@ -6,11 +6,14 @@ import org.keycloak.admin.client.resource.ClientResource
 import org.keycloak.admin.client.resource.ClientTemplateResource
 import org.keycloak.admin.client.resource.RealmResource
 import org.keycloak.admin.client.resource.RolesResource
+import org.keycloak.admin.client.resource.UserResource
 import org.keycloak.common.util.MultivaluedHashMap
 import org.keycloak.representations.idm.ClientRepresentation
 import org.keycloak.representations.idm.ClientTemplateRepresentation
+import org.keycloak.representations.idm.ComponentRepresentation
 import org.keycloak.representations.idm.ProtocolMapperRepresentation
 import org.keycloak.representations.idm.RoleRepresentation
+import org.keycloak.representations.idm.UserRepresentation
 
 import javax.ws.rs.NotFoundException
 
@@ -170,7 +173,7 @@ def createClientTemplate(final Map conf,
     return client
 }
 
-def createAPIClientTemplate(RealmResource realmResource, log, realmH, comH) {
+def createAPIClientTemplate(RealmResource realmResource, log, realmH, userH, comH) {
     def SERVICE_NAME = "api-service"
 
     List<ProtocolMapperRepresentation> protocolMappers = new ArrayList<>()
@@ -240,9 +243,22 @@ def createAPIClientTemplate(RealmResource realmResource, log, realmH, comH) {
             realmResource, log, comH
     )
 
+    //Allow template for remote use
+    List<ComponentRepresentation> components = realmResource.components().query(realmResource.toRepresentation().id,
+            "org.keycloak.services.clientregistration.policy.ClientRegistrationPolicy",
+            "Allowed Client Templates")
+
+    if (components.size() > 0) {
+        component = components.find { c -> c.subType == "authenticated" }
+        if (component != null) {
+            component.config["allowed-client-templates"] = [CLIENT_TEMPLATE]
+            realmResource.components().component(component.id).update(component);
+        }
+    }
+
     createClient([
             name                     : SERVICE_NAME,
-            description              :"Generic client for API key service",
+            description              : "Generic client for API key service",
             fullScopeAllowed         : false,
             bearerOnly               : false,
             consentRequired          : false,
@@ -285,12 +301,14 @@ def createAPIClientTemplate(RealmResource realmResource, log, realmH, comH) {
     ],
             realmResource, log, comH)
 
-    addRole("api-admin", "Manage API key", ["realm-management": [
+    //Create client role and add it
+    def roleName = "api-admin"
+    addRole(roleName, "Manage API key", ["realm-management": [
             "create-client",
             "view-clients",
             "query-clients",
             "manage-clients"
-    ]], realmResource, MAINTAINER, log, realmH, comH)
+    ]], realmResource, MAINTAINER, true, log, realmH,userH, comH)
 
     return clientTemplate
 }
@@ -301,10 +319,10 @@ def addRole(final String roleName,
             Map<String, List<String>> composits,
             RealmResource realmResource,
             String clientName,
-            log, realmH, comH) {
+            final boolean assigned,
+            log, realmH,userH, comH) {
 
     List<ClientRepresentation> clients = realmResource.clients().findByClientId(clientName)
-
     ClientResource clientResource = realmResource.clients().get(clients[0].id)
     RolesResource roleRes = clientResource.roles()
     RoleRepresentation role
@@ -328,8 +346,14 @@ def addRole(final String roleName,
         }
         clientResource.roles().create(role)
         role = clientResource.roles().get(roleName).toRepresentation()
+
         if (composits) {
             realmResource.rolesById().addComposites(role.getId(), realmH.getRolesRepresentation(composits, realmResource))
+        }
+
+        if(assigned){
+            //Assign role
+            userH.addClientRole(roleName,clientResource.getServiceAccountUser(), clientName, realmResource, log, comH)
         }
     }
     return role
