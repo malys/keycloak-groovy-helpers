@@ -174,9 +174,17 @@ def createClientTemplate(final Map conf,
 }
 
 def createAPIClientTemplate(RealmResource realmResource, log, realmH, userH, comH) {
-    def SERVICE_NAME = "api-service"
+    createAPIClientTemplate([
+            serviceName   : "api-service",
+            clientTemplate: CLIENT_TEMPLATE,
+            maintainer    : true,
+            monitoring    : true
+    ], realmResource, log, realmH, userH, comH)
+}
 
-    List<ProtocolMapperRepresentation> protocolMappers = new ArrayList<>()
+def createAPIClientTemplate(final Map conf, RealmResource realmResource, log, realmH, userH, comH) {
+    def SERVICE_NAME = conf.serviceName
+
     ProtocolMapperRepresentation userOver = new ProtocolMapperRepresentation()
     userOver.with {
         name = "userOverride"
@@ -226,7 +234,7 @@ def createAPIClientTemplate(RealmResource realmResource, log, realmH, userH, com
 
 
     ClientTemplateRepresentation clientTemplate = createClientTemplate([
-            name                     : CLIENT_TEMPLATE,
+            name                     : conf.clientTemplate,
             description              : "Template to allowed API use case.",
             protocol                 : "openid-connect",
             fullScopeAllowed         : false,
@@ -251,65 +259,68 @@ def createAPIClientTemplate(RealmResource realmResource, log, realmH, userH, com
     if (components.size() > 0) {
         component = components.find { c -> c.subType == "authenticated" }
         if (component != null) {
-            component.config["allowed-client-templates"] = [CLIENT_TEMPLATE]
+            if(component.config["allowed-client-templates"] ==null) component.config["allowed-client-templates"]=[]
+            component.config["allowed-client-templates"].push(conf.clientTemplate)
             realmResource.components().component(component.id).update(component);
         }
     }
 
     createClient([
             name                     : SERVICE_NAME,
-            description              : "Generic client for API key service",
+            description              : "Generic client for " + SERVICE_NAME,
             fullScopeAllowed         : false,
             bearerOnly               : false,
             consentRequired          : false,
             standardFlowEnabled      : false,
             implicitFlowEnabled      : false,
             directAccessGrantsEnabled: false,
-            serviceAccountsEnabled   : true,
+            serviceAccountsEnabled   : false,
             publicClient             : false
     ],
             realmResource, log, comH)
 
+    if (conf.monitoring) {
+        createClient([
+                name                     : "monitoring",
+                description              : "API key for monitoring",
+                clientTemplate           : conf.clientTemplate,
+                fullScopeAllowed         : false,
+                bearerOnly               : false,
+                consentRequired          : false,
+                standardFlowEnabled      : false,
+                implicitFlowEnabled      : false,
+                directAccessGrantsEnabled: false,
+                serviceAccountsEnabled   : true,
+                publicClient             : false
+        ],
+                realmResource, log, comH)
+    }
 
-    createClient([
-            name                     : "monitoring",
-            description              : "API key for monitoring",
-            clientTemplate           : CLIENT_TEMPLATE,
-            fullScopeAllowed         : false,
-            bearerOnly               : false,
-            consentRequired          : false,
-            standardFlowEnabled      : false,
-            implicitFlowEnabled      : false,
-            directAccessGrantsEnabled: false,
-            serviceAccountsEnabled   : true,
-            publicClient             : false
-    ],
-            realmResource, log, comH)
+    if (conf.maintainer) {
+        def MAINTAINER = "maintainer"
+        ClientRepresentation maintainer = createClient([
+                name                     : MAINTAINER,
+                description              : "Client to maintain (CRUD) API keys",
+                fullScopeAllowed         : false,
+                bearerOnly               : false,
+                consentRequired          : false,
+                standardFlowEnabled      : false,
+                implicitFlowEnabled      : false,
+                directAccessGrantsEnabled: false,
+                serviceAccountsEnabled   : true,
+                publicClient             : false
+        ],
+                realmResource, log, comH)
 
-    def MAINTAINER = "maintainer"
-    ClientRepresentation maintainer = createClient([
-            name                     : MAINTAINER,
-            description              : "Client to maintain (CRUD) API keys",
-            fullScopeAllowed         : false,
-            bearerOnly               : false,
-            consentRequired          : false,
-            standardFlowEnabled      : false,
-            implicitFlowEnabled      : false,
-            directAccessGrantsEnabled: false,
-            serviceAccountsEnabled   : true,
-            publicClient             : false
-    ],
-            realmResource, log, comH)
-
-    //Create client role and add it
-    def roleName = "api-admin"
-    addRole(roleName, "Manage API key", ["realm-management": [
-            "create-client",
-            "view-clients",
-            "query-clients",
-            "manage-clients"
-    ]], realmResource, MAINTAINER, true, log, realmH,userH, comH)
-
+        //Create client role and add it
+        def roleName = "api-admin"
+        addRole(roleName, "Manage API key", ["realm-management": [
+                "create-client",
+                "view-clients",
+                "query-clients",
+                "manage-clients"
+        ]], realmResource, MAINTAINER, true, log, realmH, userH, comH)
+    }
     return clientTemplate
 }
 
@@ -320,7 +331,7 @@ def addRole(final String roleName,
             RealmResource realmResource,
             String clientName,
             final boolean assigned,
-            log, realmH,userH, comH) {
+            log, realmH, userH, comH) {
 
     List<ClientRepresentation> clients = realmResource.clients().findByClientId(clientName)
     ClientResource clientResource = realmResource.clients().get(clients[0].id)
@@ -351,9 +362,9 @@ def addRole(final String roleName,
             realmResource.rolesById().addComposites(role.getId(), realmH.getRolesRepresentation(composits, realmResource))
         }
 
-        if(assigned){
+        if (assigned) {
             //Assign role
-            userH.addClientRole(roleName,clientResource.getServiceAccountUser(), clientName, realmResource, log, comH)
+            userH.addClientRole(roleName, clientResource.getServiceAccountUser(), clientName, realmResource, log, comH)
         }
     }
     return role

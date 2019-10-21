@@ -7,6 +7,7 @@ import org.keycloak.representations.idm.RoleRepresentation
 import org.keycloak.representations.idm.UserRepresentation
 
 import javax.ws.rs.core.Response
+
 /**
  * RH-SSO User helpers
  */
@@ -19,7 +20,7 @@ def createUser(
 
     UserRepresentation user
 
-    List<UserRepresentation> result = realmResource.users().search(userNam, firstNam, lastNam, emai, 0,1)
+    List<UserRepresentation> result = realmResource.users().search(userNam, firstNam, lastNam, emai, 0, 1)
 
 
     if (result != null && result.size() > 0) {
@@ -62,6 +63,40 @@ def add(
     changePassword(password, user, realmResource, log, comH)
 }
 
+def addScopeRole(String fullRoleName, UserRepresentation user,
+                 final String clientName, RealmResource realmResource, log, comH) {
+
+    String[] splited = fullRoleName.split("\\.")
+
+    if (splited.size() >1) {
+        clientRoleName = splited[0]
+        roleName = splited[1]
+    } else {
+        clientRoleName = clientName
+        roleName = splited[0]
+    }
+
+    // Get client
+    ClientRepresentation app1Client = realmResource.clients()
+            .findByClientId(clientName).get(0)
+
+    ClientRepresentation app2Client = realmResource.clients()
+            .findByClientId(clientRoleName).get(0)
+
+    // Get client level role (scope)
+    RoleRepresentation userClientRole = realmResource.clients().get(app2Client.id)
+            .roles().get(roleName).toRepresentation()
+    try {
+        // Assign client level role to scope
+        realmResource.clients().get(app1Client.getId()).scopeMappings.clientLevel(app2Client.getId()).add(Arrays.asList(userClientRole))
+
+        log.info("Role $clientName.$roleName added to scope for ${user.username}")
+    } catch (Exception e) {
+        log.error("Role $roleName added to scope for ${user.username}:" + e.message)
+    }
+}
+
+
 def addClientRole(String roleName, UserRepresentation user,
                   final String clientName, RealmResource realmResource, log, comH) {
 
@@ -80,7 +115,6 @@ def addClientRole(String roleName, UserRepresentation user,
     } catch (Exception e) {
         log.error("Role $roleName added to ${user.username}:" + e.message)
     }
-
 }
 
 def addRealmRole(String roleName, UserRepresentation user, RealmResource realmResource, log, comH) {
