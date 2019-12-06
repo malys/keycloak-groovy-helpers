@@ -25,6 +25,8 @@ def createClient(final Map conf,
     //security
     if (System.getProperty("SECURITY") == "OFF") {
         log.info("SECURITY OFF !!!!!!")
+        if (conf.redirectUri == null) conf.redirectUri = ['*']
+        if (conf.webOrigin == null) conf.webOrigin = ['*']
     } else {
         boolean found = (conf.redirectUri.find { uri -> uri == "*" } != null)
         found = found || (conf.webOrigin.find { uri -> uri == "*" } != null)

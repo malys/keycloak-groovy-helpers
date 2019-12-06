@@ -11,32 +11,29 @@ import javax.ws.rs.core.Response
 /**
  * RH-SSO User helpers
  */
-def createUser(
-        final String userNam,
-        final String firstNam,
-        final String lastNam,
-        final String emai,
+def createUser( final Map config,
         RealmResource realmResource, log, comH) {
 
     UserRepresentation user
 
-    List<UserRepresentation> result = realmResource.users().search(userNam, firstNam, lastNam, emai, 0, 1)
-
+    List<UserRepresentation> result = realmResource.users().search(config.username, config.firstName, config.lastName,  config.email, 0, 1)
 
     if (result != null && result.size() > 0) {
         user = result.get(0)
-        log.info("User ${userNam}")
+        log.info("User ${config.username}")
     } else {
         user = new UserRepresentation()
         user.with {
             enabled = true
-            username = userNam
-            firstName = firstNam
-            lastName = lastNam
-            email = emai
+            username = config.username
+            firstName = config.firstName
+            lastName = config.lastName
+            email = config.email
         }
+        if( config.emailVerified !=null)  user.emailVerified=config.emailVerified
+
         Response response = realmResource.users().create(user)
-        comH.checkResponse(response, "User $userNam created", log)
+        comH.checkResponse(response, "User $user.username created", log)
         String userId = response.getLocation().getPath().replaceAll(".*/([^/]+)\$", "\$1")
 
         user.id = userId
@@ -46,21 +43,13 @@ def createUser(
 }
 
 
-def add(
-        final String userNam,
-        final String firstNam,
-        final String lastNam,
-        final String emai,
-        final String password,
+def add(final Map config,
         RealmResource realmResource, log, comH) {
 
-    UserRepresentation user = createUser(userNam,
-            firstNam,
-            lastNam,
-            emai,
+    UserRepresentation user = createUser(config,
             realmResource, log, comH)
 
-    changePassword(password, user, realmResource, log, comH)
+    changePassword(config.password, user, realmResource, log, comH)
 }
 
 def addScopeRole(String fullRoleName, UserRepresentation user,
