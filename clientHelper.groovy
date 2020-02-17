@@ -111,13 +111,11 @@ def createClient(
         final String webOrigin,
         RealmResource realmResource, log, comH) {
 
-    def jsonSlurper = new JsonSlurper()
-
     List<String> redirectUriP
     List<String> webOriginP
 
-    if (redirectUri) redirectUriP = jsonSlurper.parseText(redirectUri.replaceAll("'", "\""))
-    if (redirectUri) webOriginP = jsonSlurper.parseText(webOrigin.replaceAll("'", "\""))
+    if (redirectUri) redirectUriP = comH.convertJSONToList(redirectUri)
+    if (redirectUri) webOriginP = comH.convertJSONToList(webOrigin)
 
     return createClient(
             clientName,
@@ -271,7 +269,7 @@ def createAPIClientTemplate(final Map conf, RealmResource realmResource, log, re
             name                     : SERVICE_NAME,
             description              : "Generic client for " + SERVICE_NAME,
             fullScopeAllowed         : false,
-            bearerOnly               : false,
+            bearerOnly               : true,
             consentRequired          : false,
             standardFlowEnabled      : false,
             implicitFlowEnabled      : false,
