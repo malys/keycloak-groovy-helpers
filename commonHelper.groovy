@@ -1,4 +1,7 @@
 package helpers
+
+import groovy.json.JsonSlurper
+
 /**
  * RH-SSO Common helpers
  */
@@ -34,5 +37,11 @@ def applyNomenclature(String name) {
     if (name ==~ pattern) securityAlert("Not allowed character in ${name}")
     return name.toLowerCase()
 }
+
+def convertJSONToList(String value) {
+    def jsonSlurper = new JsonSlurper()
+    return jsonSlurper.parseText(value.replaceAll("'", "\""))
+}
+
 
 
