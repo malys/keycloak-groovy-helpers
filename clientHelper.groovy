@@ -173,9 +173,38 @@ def createClientTemplate(final Map conf,
     return client
 }
 
+import groovy.transform.Field
+import org.keycloak.admin.client.resource.ClientResource
+import org.keycloak.representations.idm.ClientRepresentation
+
+// Create
+def addRoleToAccountService(RealmResource realmResource,serviceName,roles,prefix, log, realmH, clientH, userH, busH, comH) {
+    def rolesList = roles.collect { it-> prefix + "_" + it }
+
+    rolesList.each { it->
+        clientH.addRole(it, serviceName + " " + it, null, realmResource, serviceName, false, log, realmH, userH, comH)
+    }
+}
+
+def addRoleToClientAccountService(final Map config, realmResource, log, userH, comH) {
+    List<ClientRepresentation> clients = realmResource.clients().findByClientId(config.clientName)
+    ClientResource clientResource = realmResource.clients().get(clients[0].id)
+    if (config.roles != null) {
+        config.roles.each { it->
+            def role = ((String) (config.prefix  + "_" + it)).toUpperCase()
+            // Scope
+            println(role)
+            userH.addScopeRole(config.serviceName + "." + role, clientResource.getServiceAccountUser(), config.clientName, realmResource, log, comH)
+            //Assign
+            userH.addClientRole(role, clientResource.getServiceAccountUser(), config.serviceName , realmResource, log, comH)
+        }
+    }
+}
+
+
 def createAPIClientTemplate(RealmResource realmResource, log, realmH, userH, comH) {
     createAPIClientTemplate([
-            serviceName   : "api-service",
+            serviceName   : SERVICE_NAME,
             clientTemplate: CLIENT_TEMPLATE,
             maintainer    : true,
             monitoring    : true
@@ -197,6 +226,7 @@ def createAPIClientTemplate(final Map conf, RealmResource realmResource, log, re
         config["id.token.claim"] = "false"
         config["claim.name"] = "preferred_username"
         config["jsonType.label"] = "String"
+        config["access.token.claim"] = "true"
 
     }
 
@@ -371,3 +401,5 @@ def addRole(final String roleName,
 }
 
 @Field def CLIENT_TEMPLATE = "api-key"
+@Field String SERVICE_NAME = "api-service"
+
