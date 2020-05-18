@@ -1,22 +1,18 @@
 package helpers
 
 import org.keycloak.admin.client.resource.RealmResource
-import org.keycloak.representations.idm.ClientRepresentation
-import org.keycloak.representations.idm.CredentialRepresentation
-import org.keycloak.representations.idm.RoleRepresentation
-import org.keycloak.representations.idm.UserRepresentation
+import org.keycloak.representations.idm.*
 
 import javax.ws.rs.core.Response
 
 /**
  * RH-SSO User helpers
  */
-def createUser( final Map config,
-        RealmResource realmResource, log, comH) {
+def createUser(final Map config,
+               RealmResource realmResource, log, comH) {
 
     UserRepresentation user
-
-    List<UserRepresentation> result = realmResource.users().search(config.username, config.firstName, config.lastName,  config.email, 0, 1)
+    List<UserRepresentation> result = realmResource.users().search(config.username, config.firstName, config.lastName, config.email, 0, 1)
 
     if (result != null && result.size() > 0) {
         user = result.get(0)
@@ -30,7 +26,9 @@ def createUser( final Map config,
             lastName = config.lastName
             email = config.email
         }
-        if( config.emailVerified !=null)  user.emailVerified=config.emailVerified
+        if (config.emailVerified != null) user.emailVerified = config.emailVerified
+
+        if (config.groups) user.setGroups(config.groups)
 
         Response response = realmResource.users().create(user)
         comH.checkResponse(response, "User $user.username created", log)
@@ -57,7 +55,7 @@ def addScopeRole(String fullRoleName, UserRepresentation user,
 
     String[] splited = fullRoleName.split("\\.")
 
-    if (splited.size() >1) {
+    if (splited.size() > 1) {
         clientRoleName = splited[0]
         roleName = splited[1]
     } else {
@@ -120,7 +118,6 @@ def addRealmRole(String roleName, UserRepresentation user, RealmResource realmRe
         log.error("Role $roleName added to ${user.username}:" + e.message)
     }
 
-
 }
 
 def changePassword(String pw, UserRepresentation user, RealmResource realmResource, log, comH) {
@@ -140,3 +137,35 @@ def changePassword(String pw, UserRepresentation user, RealmResource realmResour
     }
 
 }
+
+def addGroup(final Map config,
+             RealmResource realmResource, log, comH) {
+    GroupRepresentation groupPres = new GroupRepresentation()
+    groupPres.name = config.name
+
+    List<GroupRepresentation> result = realmResource.groups().groups(config.name, 0, 1)
+    if (result != null && result.size() > 0) {
+        groupPres = result.get(0)
+        log.info("Group yet created ${config.name}")
+    } else {
+        try {
+            comH.checkResponse(realmResource.groups().add(groupPres), "Group ${config.name} created", log)
+            result = realmResource.groups().groups(config.name, 0, 1)
+            if (result != null && result.size() > 0) {
+                groupPres = result.get(0)
+                if (config.realmRoles) {
+                    realmResource.groups().group(groupPres.id).roles().realmLevel().add(config.realmRoles)
+                    log.info("Role added")
+                }
+                if (config.subGroups) {
+                    comH.checkResponse(realmResource.groups().group(groupPres.id).subGroup(config.subGroups), "Subgroup added", log)
+                }
+            }
+        } catch (Exception e) {
+            log.error("Group creation ${config.name} " + e.getMessage())
+        }
+    }
+    return groupPres
+}
+
+
