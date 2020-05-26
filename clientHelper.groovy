@@ -1,19 +1,12 @@
 package helpers
 
-import groovy.json.JsonSlurper
+
 import groovy.transform.Field
 import org.keycloak.admin.client.resource.ClientResource
-import org.keycloak.admin.client.resource.ClientTemplateResource
 import org.keycloak.admin.client.resource.RealmResource
 import org.keycloak.admin.client.resource.RolesResource
-import org.keycloak.admin.client.resource.UserResource
 import org.keycloak.common.util.MultivaluedHashMap
-import org.keycloak.representations.idm.ClientRepresentation
-import org.keycloak.representations.idm.ClientTemplateRepresentation
-import org.keycloak.representations.idm.ComponentRepresentation
-import org.keycloak.representations.idm.ProtocolMapperRepresentation
-import org.keycloak.representations.idm.RoleRepresentation
-import org.keycloak.representations.idm.UserRepresentation
+import org.keycloak.representations.idm.*
 
 import javax.ws.rs.NotFoundException
 
@@ -172,16 +165,11 @@ def createClientTemplate(final Map conf,
 
     return client
 }
-
-import groovy.transform.Field
-import org.keycloak.admin.client.resource.ClientResource
-import org.keycloak.representations.idm.ClientRepresentation
-
 // Create
-def addRoleToAccountService(RealmResource realmResource,serviceName,roles,prefix, log, realmH, clientH, userH, busH, comH) {
-    def rolesList = roles.collect { it-> prefix + "_" + it }
+def addRoleToAccountService(RealmResource realmResource, serviceName, roles, prefix, log, realmH, clientH, userH, busH, comH) {
+    def rolesList = roles.collect { it -> prefix + "_" + it }
 
-    rolesList.each { it->
+    rolesList.each { it ->
         clientH.addRole(it, serviceName + " " + it, null, realmResource, serviceName, false, log, realmH, userH, comH)
     }
 }
@@ -190,17 +178,53 @@ def addRoleToClientAccountService(final Map config, realmResource, log, userH, c
     List<ClientRepresentation> clients = realmResource.clients().findByClientId(config.clientName)
     ClientResource clientResource = realmResource.clients().get(clients[0].id)
     if (config.roles != null) {
-        config.roles.each { it->
-            def role = ((String) (config.prefix  + "_" + it)).toUpperCase()
+        config.roles.each { it ->
+            def role = ((String) (config.prefix + "_" + it)).toUpperCase()
             // Scope
             println(role)
             userH.addScopeRole(config.serviceName + "." + role, clientResource.getServiceAccountUser(), config.clientName, realmResource, log, comH)
             //Assign
-            userH.addClientRole(role, clientResource.getServiceAccountUser(), config.serviceName , realmResource, log, comH)
+            userH.addClientRole(role, clientResource.getServiceAccountUser(), config.serviceName, realmResource, log, comH)
         }
     }
 }
 
+/**
+ * Service Account with advanced roles
+ * @param realmResource
+ * @param log
+ * @param realmH
+ * @param userH
+ * @param comH
+ * @return client
+ */
+def addMaintainerClient(RealmResource realmResource, log, realmH, userH, comH) {
+    def MAINTAINER = "maintainer"
+    ClientRepresentation maintainer = createClient([
+            name                     : MAINTAINER,
+            description              : "Client to maintain (CRUD) API keys",
+            fullScopeAllowed         : false,
+            bearerOnly               : false,
+            consentRequired          : false,
+            standardFlowEnabled      : false,
+            implicitFlowEnabled      : false,
+            directAccessGrantsEnabled: false,
+            serviceAccountsEnabled   : true,
+            publicClient             : false
+    ],
+            realmResource, log, comH)
+
+    //Create client role and add it
+    def roleName = "api-admin"
+    addRole(roleName, "Manage API key", ["realm-management": [
+            "create-client",
+            "view-clients",
+            "query-clients",
+            "manage-clients"
+    ]], realmResource, MAINTAINER, true, log, realmH, userH, comH)
+
+    return maintainer
+}
 
 def createAPIClientTemplate(RealmResource realmResource, log, realmH, userH, comH) {
     createAPIClientTemplate([
@@ -289,7 +313,7 @@ def createAPIClientTemplate(final Map conf, RealmResource realmResource, log, re
     if (components.size() > 0) {
         component = components.find { c -> c.subType == "authenticated" }
         if (component != null) {
-            if(component.config["allowed-client-templates"] ==null) component.config["allowed-client-templates"]=[]
+            if (component.config["allowed-client-templates"] == null) component.config["allowed-client-templates"] = []
             component.config["allowed-client-templates"].push(conf.clientTemplate)
             realmResource.components().component(component.id).update(component);
         }
@@ -327,33 +351,10 @@ def createAPIClientTemplate(final Map conf, RealmResource realmResource, log, re
     }
 
     if (conf.maintainer) {
-        def MAINTAINER = "maintainer"
-        ClientRepresentation maintainer = createClient([
-                name                     : MAINTAINER,
-                description              : "Client to maintain (CRUD) API keys",
-                fullScopeAllowed         : false,
-                bearerOnly               : false,
-                consentRequired          : false,
-                standardFlowEnabled      : false,
-                implicitFlowEnabled      : false,
-                directAccessGrantsEnabled: false,
-                serviceAccountsEnabled   : true,
-                publicClient             : false
-        ],
-                realmResource, log, comH)
-
-        //Create client role and add it
-        def roleName = "api-admin"
-        addRole(roleName, "Manage API key", ["realm-management": [
-                "create-client",
-                "view-clients",
-                "query-clients",
-                "manage-clients"
-        ]], realmResource, MAINTAINER, true, log, realmH, userH, comH)
+        addMaintainerClient(realmResource, log, realmH, userH, comH)
     }
     return clientTemplate
 }
-
 
 def addRole(final String roleName,
             final String descriptio,
@@ -390,14 +391,28 @@ def addRole(final String roleName,
 
         if (composits) {
             realmResource.rolesById().addComposites(role.getId(), realmH.getRolesRepresentation(composits, realmResource))
+            log.info("Composite role $roleName")
         }
 
         if (assigned) {
             //Assign role
             userH.addClientRole(roleName, clientResource.getServiceAccountUser(), clientName, realmResource, log, comH)
+            log.info("Assign $roleName to $clientName")
         }
     }
     return role
+}
+
+def addBanMaintainer(RealmResource realmResource, log, realmH, userH, comH) {
+    //Create maintainer client if not exist
+    ClientRepresentation maintainer = addMaintainerClient(realmResource, log, realmH, userH, comH)
+
+    //Create client role and add it
+    addRole("ban-readonly", "Ban status", ["realm-management": [
+            "view-events",
+            "query-users",
+            "view-users"
+    ]], realmResource, maintainer.clientId, true, log, realmH, userH, comH)
 }
 
 @Field def CLIENT_TEMPLATE = "api-key"
