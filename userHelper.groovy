@@ -48,6 +48,7 @@ def add(final Map config,
             realmResource, log, comH)
 
     changePassword(config.password, user, realmResource, log, comH)
+    return user
 }
 
 def addScopeRole(String fullRoleName, UserRepresentation user,
