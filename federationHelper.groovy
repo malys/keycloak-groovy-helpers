@@ -1,6 +1,5 @@
 package helpers
 
-import org.keycloak.admin.client.resource.GroupResource
 import org.keycloak.admin.client.resource.RealmResource
 import org.keycloak.common.util.MultivaluedHashMap
 import org.keycloak.representations.idm.ComponentRepresentation
@@ -15,7 +14,8 @@ import org.keycloak.representations.idm.SynchronizationResultRepresentation
 /**
  * LDAP group mapper synchronization
  */
-def applyGroupMapper(final String compName, groupsLdap, ComponentRepresentation component, RealmResource realmResource, log,comH) {
+def applyGroupMapper(final String compName, groupsLdap, ComponentRepresentation component, RealmResource realmResource, log, comH) {
+    if("ON" == System.getProperty("MOCK")) return
     ComponentRepresentation compPres = new ComponentRepresentation()
     //Import groups
     compPres.with {
@@ -40,15 +40,20 @@ def applyGroupMapper(final String compName, groupsLdap, ComponentRepresentation 
         config['user.roles.retrieve.strategy'] = ["LOAD_GROUPS_BY_MEMBER_ATTRIBUTE"]
     }
 
-    comH.checkResponse(realmResource.components().add(compPres), "Component $compName created", log)
-
     List<ComponentRepresentation> components = realmResource.components().query(component.id,
             "org.keycloak.storage.ldap.mappers.LDAPStorageMapper",
             compName)
 
-
-    //Synchronization
-    SynchronizationResultRepresentation syncResult = realmResource.userStorage().syncMapperData(component.id,  components.get(0).id, "fedToKeycloak")
+    if (components.size() > 0) {
+        log.info("Component ${components.get(0).name} yet installed")
+    } else {
+        comH.checkResponse(realmResource.components().add(compPres), "Component $compName created", log)
+        components = realmResource.components().query(component.id,
+                "org.keycloak.storage.ldap.mappers.LDAPStorageMapper",
+                compName)
+    }
+    ///Synchronization
+    SynchronizationResultRepresentation syncResult = realmResource.userStorage().syncMapperData(component.id, components.get(0).id, "fedToKeycloak")
 
     if (syncResult && (syncResult.added > 0 || syncResult.updated > 0)) {
         log.info("Group ${component.name} synchronisation: ${syncResult.status}")
@@ -61,9 +66,10 @@ def applyGroupMapper(final String compName, groupsLdap, ComponentRepresentation 
  * Set role to group
  */
 def applyRoleToGroup(String groupName, String roleName, RealmResource realmResource, log, comH) {
+    if("ON" == System.getProperty("MOCK")) return
     try {
         RoleRepresentation role = realmResource.roles().get(roleName).toRepresentation()
-        GroupRepresentation groupR=realmResource.groups().groups(groupName,0,1)[0]
+        GroupRepresentation groupR = realmResource.groups().groups(groupName, 0, 1)[0]
         realmResource.groups().group(groupR.id).roles().realmLevel().add([role])
 
         log.info("Set ${roleName} to ${groupName} group")
@@ -72,16 +78,17 @@ def applyRoleToGroup(String groupName, String roleName, RealmResource realmResou
     }
 }
 
-def applyRoles(final String roleCompName,String groupsLdap, Map<String,String> groupRoles, ComponentRepresentation component, RealmResource realmResource, log, comH) {
+def applyRoles(final String roleCompName, String groupsLdap, Map<String, String> groupRoles, ComponentRepresentation component, RealmResource realmResource, log, comH) {
+    if("ON" == System.getProperty("MOCK")) return
     //Import LDAP group
-    applyGroupMapper(roleCompName, groupsLdap, component, realmResource, log,comH)
+    applyGroupMapper(roleCompName, groupsLdap, component, realmResource, log, comH)
 
     // Affect ex: [ldapAdmin: "ldap-admin-roles"]
     if (groupRoles) groupRoles.each { k, v -> applyRoleToGroup(k, v, realmResource, log, comH) }
 }
 
 def hardRoles(final String compName, roles, ComponentRepresentation component, RealmResource realmResource, log, comH) {
-
+    if("ON" == System.getProperty("MOCK")) return
     ComponentRepresentation compPres = new ComponentRepresentation()
     //Add new ldap component
     compPres.with {
@@ -106,6 +113,7 @@ def hardRoles(final String compName, roles, ComponentRepresentation component, R
 
 
 def triggerUpdate(ComponentRepresentation component, RealmResource realmResource, log, comH) {
+    if("ON" == System.getProperty("MOCK")) return
     SynchronizationResultRepresentation syncResult = realmResource.userStorage().syncUsers(component.id, "triggerFullSync")
 
     if (syncResult && (syncResult.added > 0 || syncResult.updated > 0)) {

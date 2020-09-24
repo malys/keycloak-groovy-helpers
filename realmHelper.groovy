@@ -11,14 +11,19 @@ import org.keycloak.representations.idm.RoleRepresentation
  * RH-SSO Realm helpers
  */
 def updateEventsRealm(RealmRepresentation real) {
+    updateEventsRealm(real,["eventsListeners":["logDetail"]])
+}
+
+def updateEventsRealm(RealmRepresentation real,final Map conf) {
     real.with {
         eventsEnabled = true
-        eventsListeners = ["logDetail"]
+        eventsListeners = conf['eventsListeners']
         eventsExpiration = 43200 // 12hours
         adminEventsEnabled = true
         adminEventsDetailsEnabled = true
     }
 }
+
 
 def updateSMTP(noReply,RealmRepresentation real) {
     real.smtpServer = [auth: "", from: noReply, host: "localhost", port: null, ssl: "", starttls: ""]
@@ -44,6 +49,8 @@ def createRealm(final Map conf, Keycloak k, log, comH) {
         verifyEmail = conf.verifyEmail ? conf.verifyEmail : false
         sslRequired = conf.sslRequired ? conf.sslRequired : "all" // for security
     }
+    if ("ON" == System.getProperty("MOCK")) real.sslRequired='none'
+
     updateSMTP(conf.noReply, real)
     updateEventsRealm(real)
 
