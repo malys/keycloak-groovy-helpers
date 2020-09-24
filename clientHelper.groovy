@@ -248,6 +248,7 @@ def createAPIClientTemplate(final Map conf, RealmResource realmResource, log, re
         config["user.session.note"] = "clientId"
         config["userinfo.token.claim"] = "false"
         config["id.token.claim"] = "false"
+        config["access.token.claim"] = "true"
         config["claim.name"] = "preferred_username"
         config["jsonType.label"] = "String"
         config["access.token.claim"] = "true"

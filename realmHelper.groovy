@@ -15,6 +15,7 @@ def updateEventsRealm(RealmRepresentation real) {
 }
 
 def updateEventsRealm(RealmRepresentation real,final Map conf) {
+    if("ON".equals(System.getProperty("MOCK"))) return
     real.with {
         eventsEnabled = true
         eventsListeners = conf['eventsListeners']
