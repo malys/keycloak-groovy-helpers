@@ -410,7 +410,6 @@ def addBanMaintainer(RealmResource realmResource, log, realmH, userH, comH) {
 
     //Create client role and add it
     addRole("ban-readonly", "Ban status", ["realm-management": [
-            "view-events",
             "query-users",
             "view-users"
     ]], realmResource, maintainer.clientId, true, log, realmH, userH, comH)
