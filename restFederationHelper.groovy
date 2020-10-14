@@ -51,7 +51,7 @@ def createFederation(final Map conf, RealmResource realmResource, log, comm) {
             by_pass = [conf.by_pass]
             password_sync = [conf.password_sync]
             password_hash_algorithm = [conf.password_hash_algorithm]
-            password_hash_iteration[conf.password_hash_iteration]
+            password_hash_iteration = [conf.password_hash_iteration]
 
         }
 
