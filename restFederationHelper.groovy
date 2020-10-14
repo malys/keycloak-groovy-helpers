@@ -49,6 +49,10 @@ def createFederation(final Map conf, RealmResource realmResource, log, comm) {
             proxy_enabled = [conf.proxy_enabled]
             not_create_users = [conf.not_create_users]
             by_pass = [conf.by_pass]
+            password_sync = [conf.password_sync]
+            password_hash_algorithm = [conf.password_hash_algorithm]
+            password_hash_iteration[conf.password_hash_iteration]
+
         }
 
         log.info(compPres.config.toMapString())
@@ -109,6 +113,9 @@ def updateFederation(final Map conf, RealmResource realmResource, log, comm) {
             proxy_enabled = [conf.proxy_enabled]
             not_create_users = [conf.not_create_users]
             by_pass = [conf.by_pass]
+            password_sync = [conf.password_sync]
+            password_hash_algorithm = [conf.password_hash_algorithm]
+            password_hash_iteration[conf.password_hash_iteration]
         }
 
         ComponentResource compRes = realmResource.components().component(compPres.getId())
