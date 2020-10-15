@@ -159,7 +159,8 @@ def addGroup(final Map config,
                     log.info("Role added")
                 }
                 if (config.subGroups) {
-                    comH.checkResponse(realmResource.groups().group(groupPres.id).subGroup(config.subGroups), "Subgroup added", log)
+                    realmResource.groups().group(groupPres.id).subGroup(config.subGroups)
+                    log.info("Subgroup added")
                 }
             }
         } catch (Exception e) {
