@@ -158,6 +158,15 @@ def addGroup(final Map config,
                     realmResource.groups().group(groupPres.id).roles().realmLevel().add(config.realmRoles)
                     log.info("Role added")
                 }
+
+                if (config.clientRoles) {
+                    realmResource.groups().group(groupPres.id)
+                            .roles()
+                            .clientLevel(((RoleRepresentation) config.clientRoles).containerId)
+                            .add([config.clientRoles])
+                    log.info("Role added")
+                }
+
                 if (config.subGroups) {
                     realmResource.groups().group(groupPres.id).subGroup(config.subGroups)
                     log.info("Subgroup added")
