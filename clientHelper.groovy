@@ -286,6 +286,23 @@ def createAPIClientTemplate(final Map conf, RealmResource realmResource, log, re
         config["jsonType.label"] = "String"
     }
 
+    ArrayList<ProtocolMapperRepresentation> mapperList = Arrays.asList(userOver, azpOver, audOver);
+    if (conf.roles != null) {
+        def rolesList = conf.roles.collect { it -> conf.prefix + "_" + it }
+        rolesList.each { role ->
+            // Scope
+            ProtocolMapperRepresentation specificRoleOver = new ProtocolMapperRepresentation()
+            specificRoleOver.with {
+                name = role + "_ROLE"
+                protocol = "openid-connect"
+                protocolMapper = "oidc-hardcoded-role-mapper"
+                consentRequired = false
+                config = new MultivaluedHashMap<>()
+                config["role"] = SERVICE_NAME + "." + role
+            }
+            mapperList.add(specificRoleOver);
+        }
+    }
 
     ClientTemplateRepresentation clientTemplate = createClientTemplate([
             name                     : conf.clientTemplate,
@@ -301,7 +318,7 @@ def createAPIClientTemplate(final Map conf, RealmResource realmResource, log, re
             publicClient             : false,
 
     ],
-            Arrays.asList(userOver, azpOver, audOver),
+            mapperList,
             realmResource, log, comH
     )
 
