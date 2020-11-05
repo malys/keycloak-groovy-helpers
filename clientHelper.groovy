@@ -251,7 +251,33 @@ def createAPIClientTemplate(final Map conf, RealmResource realmResource, log, re
         config["claim.name"] = "preferred_username"
         config["jsonType.label"] = "String"
         config["access.token.claim"] = "true"
+    }
 
+    ProtocolMapperRepresentation fullNameOver = new ProtocolMapperRepresentation()
+    fullNameOver.with {
+        name = "fullNameOverride"
+        protocol = "openid-connect"
+        protocolMapper = "oidc-full-name-mapper"
+        consentRequired = false
+        config = new MultivaluedHashMap<>()
+        config["userinfo.token.claim"] = "true"
+        config["id.token.claim"] = "true"
+        config["access.token.claim"] = "true"
+    }
+
+    ProtocolMapperRepresentation emailOver = new ProtocolMapperRepresentation()
+    emailOver.with {
+        name = "emailOverride"
+        protocol = "openid-connect"
+        protocolMapper = "oidc-usermodel-property-mapper"
+        consentRequired = false
+        config = new MultivaluedHashMap<>()
+        config["userinfo.token.claim"] = "true"
+        config["id.token.claim"] = "true"
+        config["access.token.claim"] = "true"
+        config["user.attribute"] = "email"
+        config["claim.name"] = "email"
+        config["jsonType.label"] = "String"
     }
 
     ProtocolMapperRepresentation azpOver = new ProtocolMapperRepresentation()
@@ -286,7 +312,6 @@ def createAPIClientTemplate(final Map conf, RealmResource realmResource, log, re
         config["jsonType.label"] = "String"
     }
 
-
     ClientTemplateRepresentation clientTemplate = createClientTemplate([
             name                     : conf.clientTemplate,
             description              : "Template to allowed API use case.",
@@ -301,7 +326,7 @@ def createAPIClientTemplate(final Map conf, RealmResource realmResource, log, re
             publicClient             : false,
 
     ],
-            Arrays.asList(userOver, azpOver, audOver),
+            Arrays.asList(userOver, fullNameOver, emailOver, azpOver, audOver),
             realmResource, log, comH
     )
 
