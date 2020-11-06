@@ -336,19 +336,21 @@ def createAPIClientTemplate(final Map conf, RealmResource realmResource, log, re
         }
     }
 
-    createClient([
-            name                     : SERVICE_NAME,
-            description              : "Generic client for " + SERVICE_NAME,
-            fullScopeAllowed         : false,
-            bearerOnly               : true,
-            consentRequired          : false,
-            standardFlowEnabled      : false,
-            implicitFlowEnabled      : false,
-            directAccessGrantsEnabled: false,
-            serviceAccountsEnabled   : false,
-            publicClient             : false
-    ],
-            realmResource, log, comH)
+    if (!conf.skipGenericClient) {
+        createClient([
+                name                     : SERVICE_NAME,
+                description              : "Generic client for " + SERVICE_NAME,
+                fullScopeAllowed         : false,
+                bearerOnly               : true,
+                consentRequired          : false,
+                standardFlowEnabled      : false,
+                implicitFlowEnabled      : false,
+                directAccessGrantsEnabled: false,
+                serviceAccountsEnabled   : false,
+                publicClient             : false
+        ],
+                realmResource, log, comH)
+    }
 
     if (conf.monitoring) {
         createClient([
