@@ -31,10 +31,10 @@ def createUser(final Map config,
         if (config.groups) user.setGroups(config.groups)
 
         Response response = realmResource.users().create(user)
-        comH.checkResponse(response, "User $user.username created", log)
-        String userId = response.getLocation().getPath().replaceAll(".*/([^/]+)\$", "\$1")
-
-        user.id = userId
+        if (comH.checkResponse(response, "User $user.username created", log)) {
+            String userId = response.getLocation().getPath().replaceAll(".*/([^/]+)\$", "\$1")
+            user.id = userId
+        }
     }
 
     return user

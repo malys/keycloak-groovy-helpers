@@ -10,7 +10,7 @@ import org.keycloak.representations.idm.RealmRepresentation
  * RH-SSO Rest Federation helpers
  */
 def createFederation(final Map conf, RealmResource realmResource, log, comm) {
-    if("ON" == System.getProperty("MOCK")) return
+    if ("ON" == System.getProperty("MOCK")) return
     RealmRepresentation realm = realmResource.toRepresentation()
 
     //Check component
@@ -49,6 +49,9 @@ def createFederation(final Map conf, RealmResource realmResource, log, comm) {
             proxy_enabled = [conf.proxy_enabled]
             not_create_users = [conf.not_create_users]
             by_pass = [conf.by_pass]
+            password_sync = [conf.password_sync]
+            password_hash_algorithm = [conf.password_hash_algorithm]
+            password_hash_iteration = [conf.password_hash_iteration]
         }
 
         log.info(compPres.config.toMapString())
@@ -78,7 +81,7 @@ def add(final Map conf, RealmResource realmResource, log, comH, fedH, prop) {
 }
 
 def updateFederation(final Map conf, RealmResource realmResource, log, comm) {
-    if("ON" == System.getProperty("MOCK")) return
+    if ("ON" == System.getProperty("MOCK")) return
     RealmRepresentation realm = realmResource.toRepresentation()
 
     List<ComponentRepresentation> components = realmResource.components().query(realm.getId(),
