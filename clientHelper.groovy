@@ -290,8 +290,7 @@ def createAPIClientTemplate(final Map conf, RealmResource realmResource, log, re
     mapperList.add(audOver)
 
     if (conf.roles != null) {
-        def rolesList = conf.roles.collect { it -> conf.prefix + "_" + it }
-        rolesList.each { role ->
+        conf.roles.each { role ->
             // Force role in template
             ProtocolMapperRepresentation specificRoleOver = new ProtocolMapperRepresentation()
             specificRoleOver.with {
