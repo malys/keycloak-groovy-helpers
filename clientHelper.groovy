@@ -236,6 +236,8 @@ def createAPIClientTemplate(RealmResource realmResource, log, realmH, userH, com
 
 def createAPIClientTemplate(final Map conf, RealmResource realmResource, log, realmH, userH, comH) {
     def SERVICE_NAME = conf.serviceName
+    //List of mappers for template
+    List<ProtocolMapperRepresentation> mapperList = [];
 
     ProtocolMapperRepresentation userOver = new ProtocolMapperRepresentation()
     userOver.with {
@@ -252,6 +254,7 @@ def createAPIClientTemplate(final Map conf, RealmResource realmResource, log, re
         config["jsonType.label"] = "String"
         config["access.token.claim"] = "true"
     }
+    mapperList.add(userOver)
 
     ProtocolMapperRepresentation fullNameOver = new ProtocolMapperRepresentation()
     fullNameOver.with {
@@ -264,6 +267,7 @@ def createAPIClientTemplate(final Map conf, RealmResource realmResource, log, re
         config["id.token.claim"] = "true"
         config["access.token.claim"] = "true"
     }
+    mapperList.add(fullNameOver)    
 
     ProtocolMapperRepresentation emailOver = new ProtocolMapperRepresentation()
     emailOver.with {
@@ -279,6 +283,7 @@ def createAPIClientTemplate(final Map conf, RealmResource realmResource, log, re
         config["claim.name"] = "email"
         config["jsonType.label"] = "String"
     }
+    mapperList.add(emailOver)
 
     ProtocolMapperRepresentation azpOver = new ProtocolMapperRepresentation()
     azpOver.with {
@@ -293,9 +298,8 @@ def createAPIClientTemplate(final Map conf, RealmResource realmResource, log, re
         config["access.token.claim"] = "true"
         config["claim.name"] = "azp"
         config["jsonType.label"] = "String"
-
     }
-
+    mapperList.add(azpOver)
 
     ProtocolMapperRepresentation audOver = new ProtocolMapperRepresentation()
     audOver.with {
@@ -311,22 +315,39 @@ def createAPIClientTemplate(final Map conf, RealmResource realmResource, log, re
         config["claim.name"] = "aud"
         config["jsonType.label"] = "String"
     }
+    mapperList.add(audOver)
 
-    ClientTemplateRepresentation clientTemplate = createClientTemplate([
-            name                     : conf.clientTemplate,
-            description              : "Template to allowed API use case.",
-            protocol                 : "openid-connect",
-            fullScopeAllowed         : false,
-            bearerOnly               : false,
-            consentRequired          : false,
-            standardFlowEnabled      : false,
-            implicitFlowEnabled      : false,
-            directAccessGrantsEnabled: false,
-            serviceAccountsEnabled   : true,
-            publicClient             : false,
+    if (conf.roles != null) {
+        conf.roles.each { role ->
+            // Force role in template
+            ProtocolMapperRepresentation specificRoleOver = new ProtocolMapperRepresentation()
+            specificRoleOver.with {
+                name = role.toLowerCase() + "RoleAdd"
+                protocol = "openid-connect"
+                protocolMapper = "oidc-hardcoded-role-mapper"
+                consentRequired = false
+                config = new MultivaluedHashMap<>()
+                config["role"] = SERVICE_NAME + "." + role
+            }
+            mapperList.add(specificRoleOver);
+        }
+    }
+    ClientTemplateRepresentation clientTemplate = createClientTemplate(
+            [
+                    name                     : conf.clientTemplate,
+                    description              : "Template to allowed API use case.",
+                    protocol                 : "openid-connect",
+                    fullScopeAllowed         : false,
+                    bearerOnly               : false,
+                    consentRequired          : false,
+                    standardFlowEnabled      : false,
+                    implicitFlowEnabled      : false,
+                    directAccessGrantsEnabled: false,
+                    serviceAccountsEnabled   : true,
+                    publicClient             : false,
 
-    ],
-            Arrays.asList(userOver, fullNameOver, emailOver, azpOver, audOver),
+            ],
+            mapperList,
             realmResource, log, comH
     )
 
@@ -344,19 +365,21 @@ def createAPIClientTemplate(final Map conf, RealmResource realmResource, log, re
         }
     }
 
-    createClient([
-            name                     : SERVICE_NAME,
-            description              : "Generic client for " + SERVICE_NAME,
-            fullScopeAllowed         : false,
-            bearerOnly               : true,
-            consentRequired          : false,
-            standardFlowEnabled      : false,
-            implicitFlowEnabled      : false,
-            directAccessGrantsEnabled: false,
-            serviceAccountsEnabled   : false,
-            publicClient             : false
-    ],
-            realmResource, log, comH)
+    if (!conf.skipGenericClient) {
+        createClient([
+                name                     : SERVICE_NAME,
+                description              : "Generic client for " + SERVICE_NAME,
+                fullScopeAllowed         : false,
+                bearerOnly               : true,
+                consentRequired          : false,
+                standardFlowEnabled      : false,
+                implicitFlowEnabled      : false,
+                directAccessGrantsEnabled: false,
+                serviceAccountsEnabled   : false,
+                publicClient             : false
+        ],
+                realmResource, log, comH)
+    }
 
     if (conf.monitoring) {
         createClient([
