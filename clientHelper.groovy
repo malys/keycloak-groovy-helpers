@@ -236,6 +236,8 @@ def createAPIClientTemplate(RealmResource realmResource, log, realmH, userH, com
 
 def createAPIClientTemplate(final Map conf, RealmResource realmResource, log, realmH, userH, comH) {
     def SERVICE_NAME = conf.serviceName
+    //List of mappers for template
+    List<ProtocolMapperRepresentation> mapperList = [];
 
     ProtocolMapperRepresentation userOver = new ProtocolMapperRepresentation()
     userOver.with {
@@ -253,6 +255,7 @@ def createAPIClientTemplate(final Map conf, RealmResource realmResource, log, re
         config["access.token.claim"] = "true"
 
     }
+    mapperList.add(userOver)
 
     ProtocolMapperRepresentation azpOver = new ProtocolMapperRepresentation()
     azpOver.with {
@@ -267,9 +270,8 @@ def createAPIClientTemplate(final Map conf, RealmResource realmResource, log, re
         config["access.token.claim"] = "true"
         config["claim.name"] = "azp"
         config["jsonType.label"] = "String"
-
     }
-
+    mapperList.add(azpOver)
 
     ProtocolMapperRepresentation audOver = new ProtocolMapperRepresentation()
     audOver.with {
@@ -285,15 +287,15 @@ def createAPIClientTemplate(final Map conf, RealmResource realmResource, log, re
         config["claim.name"] = "aud"
         config["jsonType.label"] = "String"
     }
+    mapperList.add(audOver)
 
-    ArrayList<ProtocolMapperRepresentation> mapperList = Arrays.asList(userOver, azpOver, audOver);
     if (conf.roles != null) {
         def rolesList = conf.roles.collect { it -> conf.prefix + "_" + it }
         rolesList.each { role ->
-            // Scope
+            // Force role in template
             ProtocolMapperRepresentation specificRoleOver = new ProtocolMapperRepresentation()
             specificRoleOver.with {
-                name = role + "_ROLE"
+                name = role.toLowerCase() + "RoleAdd"
                 protocol = "openid-connect"
                 protocolMapper = "oidc-hardcoded-role-mapper"
                 consentRequired = false
@@ -304,20 +306,21 @@ def createAPIClientTemplate(final Map conf, RealmResource realmResource, log, re
         }
     }
 
-    ClientTemplateRepresentation clientTemplate = createClientTemplate([
-            name                     : conf.clientTemplate,
-            description              : "Template to allowed API use case.",
-            protocol                 : "openid-connect",
-            fullScopeAllowed         : false,
-            bearerOnly               : false,
-            consentRequired          : false,
-            standardFlowEnabled      : false,
-            implicitFlowEnabled      : false,
-            directAccessGrantsEnabled: false,
-            serviceAccountsEnabled   : true,
-            publicClient             : false,
+    ClientTemplateRepresentation clientTemplate = createClientTemplate(
+            [
+                    name                     : conf.clientTemplate,
+                    description              : "Template to allowed API use case.",
+                    protocol                 : "openid-connect",
+                    fullScopeAllowed         : false,
+                    bearerOnly               : false,
+                    consentRequired          : false,
+                    standardFlowEnabled      : false,
+                    implicitFlowEnabled      : false,
+                    directAccessGrantsEnabled: false,
+                    serviceAccountsEnabled   : true,
+                    publicClient             : false,
 
-    ],
+            ],
             mapperList,
             realmResource, log, comH
     )
