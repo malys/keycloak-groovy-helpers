@@ -139,8 +139,74 @@ def changePassword(String pw, UserRepresentation user, RealmResource realmResour
 
 }
 
+/*
+   Assign Role to a user group
+ */
+
+def addRoleToGroup(final Map config, GroupRepresentation groupPres, RealmResource realmResource, realmH, clientH, log) {
+    if (config.realmRoles) {
+        def roleR = config.realmRoles
+        if (config.realmRoles instanceof String) {
+            roleR = realmH.getRole(config.realmRoles, realmResource, log)
+        }
+        realmResource.groups().group(groupPres.id)
+                .roles()
+                .realmLevel()
+                .add([roleR])
+        log.info("Role ${config.realmRoles} added to ${groupPres.name}.")
+    }
+
+    if (config.clientRoles) {
+        def roleR = config.clientRoles
+        if (config.clientRoles instanceof String) {
+            def tab = config.clientRoles.split('\\.')
+            def clientName = tab[0]
+            def roleName = tab[1]
+            roleR = clientH.getRole(clientName, roleName, realmResource, log)
+        }
+        realmResource.groups().group(groupPres.id)
+                .roles()
+                .clientLevel(((RoleRepresentation) roleR).containerId)
+                .add([roleR])
+        log.info("Role ${config.clientRoles} to ${groupPres.name}.")
+    }
+}
+
+/*
+   Unassign Role to a user group
+ */
+
+def removeRoleToGroup(final Map config, GroupRepresentation groupPres, RealmResource realmResource, realmH, clientH, log) {
+    if (config.realmRoles) {
+        def roleR = config.realmRoles
+        if (config.realmRoles instanceof String) {
+            roleR = realmH.getRole(config.realmRoles, realmResource, log)
+        }
+        realmResource.groups().group(groupPres.id)
+                .roles()
+                .realmLevel()
+                .remove([roleR])
+        log.info("Role ${config.realmRoles} removed to ${groupPres.name}.")
+    }
+
+    if (config.clientRoles) {
+        def roleR = config.clientRoles
+        if (config.clientRoles instanceof String) {
+            def tab = config.clientRoles.split('\\.')
+            def clientName = tab[0]
+            def roleName = tab[1]
+            roleR = clientH.getRole(clientName, roleName, realmResource, log)
+        }
+        realmResource.groups().group(groupPres.id)
+                .roles()
+                .clientLevel(((RoleRepresentation) roleR).containerId)
+                .remove([roleR])
+        log.info("Role ${config.clientRoles} removed to ${groupPres.name}.")
+    }
+}
+
 def addGroup(final Map config,
-             RealmResource realmResource, log, comH) {
+             RealmResource realmResource, realmH, clientH, log, comH) {
     GroupRepresentation groupPres = new GroupRepresentation()
     groupPres.name = config.name
 
@@ -154,19 +220,7 @@ def addGroup(final Map config,
             result = realmResource.groups().groups(config.name, 0, 1)
             if (result != null && result.size() > 0) {
                 groupPres = result.get(0)
-                if (config.realmRoles) {
-                    realmResource.groups().group(groupPres.id).roles().realmLevel().add(config.realmRoles)
-                    log.info("Role added")
-                }
-
-                if (config.clientRoles) {
-                    realmResource.groups().group(groupPres.id)
-                            .roles()
-                            .clientLevel(((RoleRepresentation) config.clientRoles).containerId)
-                            .add([config.clientRoles])
-                    log.info("Role added")
-                }
-
+                addRoleToGroup(config, groupPres, realmResource, realmH, clientH, log)
                 if (config.subGroups) {
                     realmResource.groups().group(groupPres.id).subGroup(config.subGroups)
                     log.info("Subgroup added")
