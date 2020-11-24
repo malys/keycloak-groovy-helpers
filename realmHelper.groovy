@@ -11,11 +11,11 @@ import org.keycloak.representations.idm.RoleRepresentation
  * RH-SSO Realm helpers
  */
 def updateEventsRealm(RealmRepresentation real) {
-    updateEventsRealm(real,["eventsListeners":["logDetail"]])
+    updateEventsRealm(real, ["eventsListeners": ["logDetail"]])
 }
 
-def updateEventsRealm(RealmRepresentation real,final Map conf) {
-    if("ON".equals(System.getProperty("MOCK"))) return
+def updateEventsRealm(RealmRepresentation real, final Map conf) {
+    if ("ON".equals(System.getProperty("MOCK"))) return
     real.with {
         eventsEnabled = true
         eventsListeners = conf['eventsListeners']
@@ -26,7 +26,7 @@ def updateEventsRealm(RealmRepresentation real,final Map conf) {
 }
 
 
-def updateSMTP(noReply,RealmRepresentation real) {
+def updateSMTP(noReply, RealmRepresentation real) {
     real.smtpServer = [auth: "", from: noReply, host: "localhost", port: null, ssl: "", starttls: ""]
 }
 
@@ -50,7 +50,7 @@ def createRealm(final Map conf, Keycloak k, log, comH) {
         verifyEmail = conf.verifyEmail ? conf.verifyEmail : false
         sslRequired = conf.sslRequired ? conf.sslRequired : "all" // for security
     }
-    if ("ON" == System.getProperty("MOCK")) real.sslRequired='none'
+    if ("ON" == System.getProperty("MOCK")) real.sslRequired = 'none'
 
     updateSMTP(conf.noReply, real)
     updateEventsRealm(real)
@@ -137,7 +137,6 @@ def getRolesRepresentation(final Map<String, List<String>> composits,
                            RealmResource realmResource) {
 
     List<RoleRepresentation> list = []
-
     composits.each { String clientName, List<String> roleNames ->
         List<ClientRepresentation> clients = realmResource.clients().findByClientId(clientName)
         if (clients && clients.size() > 0) {
@@ -149,4 +148,19 @@ def getRolesRepresentation(final Map<String, List<String>> composits,
     }
 
     return list
+}
+
+// Get realm role from name
+def getRole(roleName, RealmResource realmResource, log) {
+    def role
+    RolesResource roleRes = realmResource.roles()
+    if (roleRes && roleRes.list()) {
+        role = roleRes.list().find {
+            RoleRepresentation r ->
+                r.name == roleName
+        }
+    } else {
+        log.info("Role $roleName in ${realmResource.toRepresentation().id} missing")
+    }
+    return role
 }
