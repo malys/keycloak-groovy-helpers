@@ -51,8 +51,8 @@ def createClient(final Map conf,
         client.fullScopeAllowed = conf.fullScopeAllowed
     }
 
-    if (conf.directAccessGrantsEnable) {
-        client.directAccessGrantsEnabled = conf.directAccessGrantsEnable
+    if (conf.directAccessGrantsEnabled) {
+        client.directAccessGrantsEnabled = conf.directAccessGrantsEnabled
     }
 
     if (conf.clientTemplate) {
@@ -74,7 +74,7 @@ def createClient(final Map conf,
 
 def createClient(
         final String clientName,
-        final Boolean directAccessGrantsEnable,
+        final Boolean directAccessGrantsEnabled,
         final Boolean publicClient,
         final Boolean bearerOnly,
         final Boolean fullScopeAllowed,
@@ -83,13 +83,13 @@ def createClient(
         RealmResource realmResource, log, comH) {
 
     return createClient([
-            "name"                    : clientName,
-            "directAccessGrantsEnable": directAccessGrantsEnable,
-            "publicClient"            : publicClient,
-            "bearerOnly"              : bearerOnly,
-            "fullScopeAllowed"        : fullScopeAllowed,
-            "redirectUri"             : redirectUri,
-            "webOrigin"               : webOrigin
+            "name"                     : clientName,
+            "directAccessGrantsEnabled": directAccessGrantsEnabled,
+            "publicClient"             : publicClient,
+            "bearerOnly"               : bearerOnly,
+            "fullScopeAllowed"         : fullScopeAllowed,
+            "redirectUri"              : redirectUri,
+            "webOrigin"                : webOrigin
     ],
             realmResource, log, comH)
 }
@@ -267,7 +267,7 @@ def createAPIClientTemplate(final Map conf, RealmResource realmResource, log, re
         config["id.token.claim"] = "true"
         config["access.token.claim"] = "true"
     }
-    mapperList.add(fullNameOver)    
+    mapperList.add(fullNameOver)
 
     ProtocolMapperRepresentation emailOver = new ProtocolMapperRepresentation()
     emailOver.with {
@@ -410,7 +410,7 @@ def getClientResources(clientName, realmResource) {
     return realmResource.clients().get(clients[0].id)
 }
 
-// Get client role from names
+// Get client role from name
 def getRole(clientName, roleName, realmResource, log) {
     RoleRepresentation role
     ClientResource clientResource = getClientResources(clientName, realmResource)
