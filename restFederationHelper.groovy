@@ -9,7 +9,7 @@ import org.keycloak.representations.idm.RealmRepresentation
 /**
  * RH-SSO Rest Federation helpers
  */
-def createFederation(final Map conf, RealmResource realmResource, log, comm) {
+def createFederation(final Map conf, RealmResource realmResource, log, comH) {
     if ("ON" == System.getProperty("MOCK")) return
     RealmRepresentation realm = realmResource.toRepresentation()
 
@@ -22,7 +22,7 @@ def createFederation(final Map conf, RealmResource realmResource, log, comm) {
         ComponentRepresentation compPres = new ComponentRepresentation()
         //Add new ldap component
         compPres.with {
-            name = conf.name
+            name = comH.format(conf.name)
             providerId = "Rest User Federation"
             providerType = "org.keycloak.storage.UserStorageProvider"
             parentId = realm.id
@@ -56,7 +56,7 @@ def createFederation(final Map conf, RealmResource realmResource, log, comm) {
         }
 
         log.info(compPres.config.toMapString())
-        comm.checkResponse(realmResource.components().add(compPres), "Component ${conf.name} created", log)
+        comH.checkResponse(realmResource.components().add(compPres), "Component ${conf.name} created", log)
         components = realmResource.components().query(realm.getId(),
                 "org.keycloak.storage.UserStorageProvider",
                 conf.name)

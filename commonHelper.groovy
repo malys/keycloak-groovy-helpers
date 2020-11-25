@@ -43,5 +43,49 @@ def convertJSONToList(String value) {
     return jsonSlurper.parseText(value.replaceAll("'", "\""))
 }
 
+/* Apply nomenclature
+| component             | style       | style description                            | example                     |
+| --------------------- | ----------- | -------------------------------------------- | --------------------------- |
+| Web origin            | url         | domain name ONLY                             | see URL example             |
+| Valid redirect URL    | url         | domains without ( * ) ended bye "/*"         | see URL example             |
+| theme                 | kebab       | lower case with dash -                       | collect                     |
+| realm/client/template | kebab       | lower case with dash -                       | collect                     |
+| platform role         | kebab       | lower case with dash -                       | realm-management, api-admin |
+| business role         | upper snake | uppercase (PREFIX_ROLE with underscore (_) ) | LC_ADMIN                    |
+ */
+
+def formatBusinessRole(String prefix, name) {
+    return formatBusinessRole(prefix + "_" + name)
+}
+
+def formatBusinessRole(name) {
+    return toSnakeCase(name).toUpperCase()
+}
+
+def format(prefix, name) {
+    return toKebabCase(prefix + "-" + name)
+}
+
+def format(name) {
+    return toKebabCase(name)
+}
+
+def String toKebabCase(String text) {
+    return text
+            .replaceAll(/([a-z0-9])([A-Z])/, '$1-$2')
+            .replaceAll(/([A-Z])([A-Z])(?=[a-z])/, '$1-$2')
+            .replaceAll(/\_/, '-')
+            .toLowerCase();
+}
+
+def String toSnakeCase(String text) {
+    return text
+            .replaceAll(/([a-z0-9])([A-Z])/, '$1_$2')
+            .replaceAll(/([A-Z])([A-Z])(?=[a-z])/, '$1_$2')
+            .replaceAll(/\-/, '_')
+            .toLowerCase()
+}
+
+
 
 
