@@ -30,7 +30,7 @@ def updateSMTP(noReply, RealmRepresentation real) {
     real.smtpServer = [auth: "", from: noReply, host: "localhost", port: null, ssl: "", starttls: ""]
 }
 
-def createRealm(final Map conf, Keycloak k, log, comH) {
+def create(final Map conf, Keycloak k, log, comH) {
     String realmName = comH.applyNomenclature(conf.realm)
 
     RealmRepresentation real = new RealmRepresentation()
@@ -83,19 +83,19 @@ def createRealm(final Map conf, Keycloak k, log, comH) {
     return realmResource
 }
 
-
+// Create with default role
 def add(final Map conf,
-        final String roleName, final String descriptio, Map<String, List<String>> composits,
+        final String roleName, final String description, Map<String, List<String>> composits,
         Keycloak k, log, comH) {
 
-    RealmResource realmResource = createRealm(conf, k, log, comH)
+    RealmResource realmResource = create(conf, k, log, comH)
 
-    addRole(roleName, descriptio, composits, realmResource, log, comH)
+    if (roleName) addRole(roleName, description, composits, realmResource, log, comH)
 
     return realmResource
 }
 
-
+// Create realm role from name
 def addRole(final String roleName,
             final String descriptio,
             Map<String, List<String>> composits,
@@ -107,10 +107,7 @@ def addRole(final String roleName,
     RoleRepresentation role
 
     if (roleRes && roleRes.list()) {
-        role = roleRes.list().find {
-            RoleRepresentation r ->
-                r.name == roleName
-        }
+        role = getRole(roleName, realmResource, log)
     }
     if (role == null) {
         role = new RoleRepresentation()
@@ -133,6 +130,20 @@ def addRole(final String roleName,
     return role
 }
 
+// Remove realm role
+def removeRole(final String roleName,
+               RealmResource realmResource,
+               log, comH) {
+
+    RoleRepresentation role = getRole(roleName, realmResource, log)
+    if (role) {
+        realmResource.roles().deleteRole(role.name)
+        log.info("Role $roleName in ${realmResource.toRepresentation().id} is removed")
+    } else {
+        log.info("Role $roleName in ${realmResource.toRepresentation().id} missing")
+    }
+}
+// Convert List<String> of Role to List<RoleRepresentation>
 def getRolesRepresentation(final Map<String, List<String>> composits,
                            RealmResource realmResource) {
 
