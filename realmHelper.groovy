@@ -133,18 +133,22 @@ def addRole(final String roleName,
     return role
 }
 
-def getRolesRepresentation(final Map<String, List<String>> composits,
-                           RealmResource realmResource) {
+def getRolesRepresentation(final Map<String, List<String>> composits, RealmResource realmResource) {
 
     List<RoleRepresentation> list = []
     composits.each { String clientName, List<String> roleNames ->
-        List<ClientRepresentation> clients = realmResource.clients().findByClientId(clientName)
-        if (clients && clients.size() > 0) {
-            list.addAll(realmResource.clients().get(clients.get(0).id).roles().list().findAll { it ->
+        if(clientName && clientName.size() > 0){
+            List<ClientRepresentation> clients = realmResource.clients().findByClientId(clientName)
+            if (clients && clients.size() > 0) {
+                list.addAll(realmResource.clients().get(clients.get(0).id).roles().list().findAll { it ->
+                    roleNames.contains(it.name)
+                })
+            }
+        } else {
+            list.addAll(realmResource.roles().list().findAll { it ->
                 roleNames.contains(it.name)
             })
         }
-
     }
 
     return list
