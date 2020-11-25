@@ -83,7 +83,7 @@ def createClient(
         RealmResource realmResource, log, comH) {
 
     return createClient([
-            "name"                     : clientName,
+            "name"                     : comH.format(clientName),
             "directAccessGrantsEnabled": directAccessGrantsEnabled,
             "publicClient"             : publicClient,
             "bearerOnly"               : bearerOnly,
@@ -129,7 +129,7 @@ def createClientTemplate(final Map conf,
 
     ClientTemplateRepresentation client = new ClientTemplateRepresentation()
     client.with {
-        name = clientTemplateName
+        name = comH.format(clientTemplateName)
         description = conf.description
         protocol = conf.protocol
         fullScopeAllowed = conf.fullScopeAllowed

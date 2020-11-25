@@ -35,8 +35,8 @@ def create(final Map conf, Keycloak k, log, comH) {
 
     RealmRepresentation real = new RealmRepresentation()
     real.with {
-        id = conf.realm
-        realm = conf.realm
+        id = comH.format(conf.realm)
+        realm = comH.format(conf.realm)
         enabled = true
         bruteForceProtected = true
         failureFactor = 10
