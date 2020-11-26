@@ -13,16 +13,18 @@ def createFederation(final Map conf, RealmResource realmResource, log, comH) {
     if ("ON" == System.getProperty("MOCK")) return
     RealmRepresentation realm = realmResource.toRepresentation()
 
+    def federationName = comH.format(conf.name)
+
     //Check component
     List<ComponentRepresentation> components = realmResource.components().query(realm.getId(),
             "org.keycloak.storage.UserStorageProvider",
-            conf.name)
+            federationName)
 
     if (components.size() == 0) {
         ComponentRepresentation compPres = new ComponentRepresentation()
         //Add new ldap component
         compPres.with {
-            name = comH.format(conf.name)
+            name = federationName
             providerId = "Rest User Federation"
             providerType = "org.keycloak.storage.UserStorageProvider"
             parentId = realm.id
@@ -56,14 +58,14 @@ def createFederation(final Map conf, RealmResource realmResource, log, comH) {
         }
 
         log.info(compPres.config.toMapString())
-        comH.checkResponse(realmResource.components().add(compPres), "Component ${conf.name} created", log)
+        comH.checkResponse(realmResource.components().add(compPres), "Component ${federationName} created", log)
         components = realmResource.components().query(realm.getId(),
                 "org.keycloak.storage.UserStorageProvider",
-                conf.name)
+                federationName)
         component = components.get(0)
     } else {
         component = components.get(0)
-        log.info("Component ${conf.name} yet installed")
+        log.info("Component ${federationName} yet installed")
     }
 
     return component
