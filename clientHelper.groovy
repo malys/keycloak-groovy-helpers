@@ -421,9 +421,6 @@ def getRole(clientName, roleName, realmResource, log) {
                 RoleRepresentation r ->
                     r.name == roleName
             }
-
-        } else {
-            log.info("Role $roleName in $clientName missing")
         }
     } else {
         log.error("Client  $clientName missing")

@@ -80,7 +80,11 @@ def add(final Map conf, RealmResource realmResource, log, comH, fedH, prop) {
             log,
             comH
     )
-    fedH.triggerUpdate(component, realmResource, log, comH)
+    if(conf.skipTriggerUpdate==null || !conf.skipTriggerUpdate){
+        fedH.triggerUpdate(component, realmResource, log, comH)
+    } else {
+        log.info("Skip federation trigger update")
+    }
 }
 
 def updateFederation(final Map conf, RealmResource realmResource, log, comm) {
