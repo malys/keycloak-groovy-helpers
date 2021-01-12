@@ -51,8 +51,8 @@ def createClient(final Map conf,
         client.fullScopeAllowed = conf.fullScopeAllowed
     }
 
-    if (conf.directAccessGrantsEnable) {
-        client.directAccessGrantsEnabled = conf.directAccessGrantsEnable
+    if (conf.directAccessGrantsEnabled) {
+        client.directAccessGrantsEnabled = conf.directAccessGrantsEnabled
     }
 
     if (conf.clientTemplate) {
@@ -74,7 +74,7 @@ def createClient(final Map conf,
 
 def createClient(
         final String clientName,
-        final Boolean directAccessGrantsEnable,
+        final Boolean directAccessGrantsEnabled,
         final Boolean publicClient,
         final Boolean bearerOnly,
         final Boolean fullScopeAllowed,
@@ -83,13 +83,13 @@ def createClient(
         RealmResource realmResource, log, comH) {
 
     return createClient([
-            "name"                    : clientName,
-            "directAccessGrantsEnable": directAccessGrantsEnable,
-            "publicClient"            : publicClient,
-            "bearerOnly"              : bearerOnly,
-            "fullScopeAllowed"        : fullScopeAllowed,
-            "redirectUri"             : redirectUri,
-            "webOrigin"               : webOrigin
+            "name"                     : comH.format(clientName),
+            "directAccessGrantsEnabled": directAccessGrantsEnabled,
+            "publicClient"             : publicClient,
+            "bearerOnly"               : bearerOnly,
+            "fullScopeAllowed"         : fullScopeAllowed,
+            "redirectUri"              : redirectUri,
+            "webOrigin"                : webOrigin
     ],
             realmResource, log, comH)
 }
@@ -129,7 +129,7 @@ def createClientTemplate(final Map conf,
 
     ClientTemplateRepresentation client = new ClientTemplateRepresentation()
     client.with {
-        name = clientTemplateName
+        name = comH.format(clientTemplateName)
         description = conf.description
         protocol = conf.protocol
         fullScopeAllowed = conf.fullScopeAllowed
@@ -165,7 +165,7 @@ def createClientTemplate(final Map conf,
 
     return client
 }
-// Create
+// Create new roles in account services
 def addRoleToAccountService(RealmResource realmResource, serviceName, roles, prefix, log, realmH, clientH, userH, busH, comH) {
     def rolesList = roles.collect { it -> prefix + "_" + it }
 
@@ -181,7 +181,6 @@ def addRoleToClientAccountService(final Map config, realmResource, log, userH, c
         config.roles.each { it ->
             def role = ((String) (config.prefix + "_" + it)).toUpperCase()
             // Scope
-            println(role)
             userH.addScopeRole(config.serviceName + "." + role, clientResource.getServiceAccountUser(), config.clientName, realmResource, log, comH)
             //Assign
             userH.addClientRole(role, clientResource.getServiceAccountUser(), config.serviceName, realmResource, log, comH)
@@ -237,6 +236,8 @@ def createAPIClientTemplate(RealmResource realmResource, log, realmH, userH, com
 
 def createAPIClientTemplate(final Map conf, RealmResource realmResource, log, realmH, userH, comH) {
     def SERVICE_NAME = conf.serviceName
+    //List of mappers for template
+    List<ProtocolMapperRepresentation> mapperList = [];
 
     ProtocolMapperRepresentation userOver = new ProtocolMapperRepresentation()
     userOver.with {
@@ -252,8 +253,37 @@ def createAPIClientTemplate(final Map conf, RealmResource realmResource, log, re
         config["claim.name"] = "preferred_username"
         config["jsonType.label"] = "String"
         config["access.token.claim"] = "true"
-
     }
+    mapperList.add(userOver)
+
+    ProtocolMapperRepresentation fullNameOver = new ProtocolMapperRepresentation()
+    fullNameOver.with {
+        name = "fullNameOverride"
+        protocol = "openid-connect"
+        protocolMapper = "oidc-full-name-mapper"
+        consentRequired = false
+        config = new MultivaluedHashMap<>()
+        config["userinfo.token.claim"] = "true"
+        config["id.token.claim"] = "true"
+        config["access.token.claim"] = "true"
+    }
+    mapperList.add(fullNameOver)
+
+    ProtocolMapperRepresentation emailOver = new ProtocolMapperRepresentation()
+    emailOver.with {
+        name = "emailOverride"
+        protocol = "openid-connect"
+        protocolMapper = "oidc-usermodel-property-mapper"
+        consentRequired = false
+        config = new MultivaluedHashMap<>()
+        config["userinfo.token.claim"] = "true"
+        config["id.token.claim"] = "true"
+        config["access.token.claim"] = "true"
+        config["user.attribute"] = "email"
+        config["claim.name"] = "email"
+        config["jsonType.label"] = "String"
+    }
+    mapperList.add(emailOver)
 
     ProtocolMapperRepresentation azpOver = new ProtocolMapperRepresentation()
     azpOver.with {
@@ -268,9 +298,8 @@ def createAPIClientTemplate(final Map conf, RealmResource realmResource, log, re
         config["access.token.claim"] = "true"
         config["claim.name"] = "azp"
         config["jsonType.label"] = "String"
-
     }
-
+    mapperList.add(azpOver)
 
     ProtocolMapperRepresentation audOver = new ProtocolMapperRepresentation()
     audOver.with {
@@ -286,23 +315,39 @@ def createAPIClientTemplate(final Map conf, RealmResource realmResource, log, re
         config["claim.name"] = "aud"
         config["jsonType.label"] = "String"
     }
+    mapperList.add(audOver)
 
+    if (conf.roles != null) {
+        conf.roles.each { role ->
+            // Force role in template
+            ProtocolMapperRepresentation specificRoleOver = new ProtocolMapperRepresentation()
+            specificRoleOver.with {
+                name = role.toLowerCase() + "RoleAdd"
+                protocol = "openid-connect"
+                protocolMapper = "oidc-hardcoded-role-mapper"
+                consentRequired = false
+                config = new MultivaluedHashMap<>()
+                config["role"] = SERVICE_NAME + "." + role
+            }
+            mapperList.add(specificRoleOver);
+        }
+    }
+    ClientTemplateRepresentation clientTemplate = createClientTemplate(
+            [
+                    name                     : conf.clientTemplate,
+                    description              : "Template to allowed API use case.",
+                    protocol                 : "openid-connect",
+                    fullScopeAllowed         : false,
+                    bearerOnly               : false,
+                    consentRequired          : false,
+                    standardFlowEnabled      : false,
+                    implicitFlowEnabled      : false,
+                    directAccessGrantsEnabled: false,
+                    serviceAccountsEnabled   : true,
+                    publicClient             : false,
 
-    ClientTemplateRepresentation clientTemplate = createClientTemplate([
-            name                     : conf.clientTemplate,
-            description              : "Template to allowed API use case.",
-            protocol                 : "openid-connect",
-            fullScopeAllowed         : false,
-            bearerOnly               : false,
-            consentRequired          : false,
-            standardFlowEnabled      : false,
-            implicitFlowEnabled      : false,
-            directAccessGrantsEnabled: false,
-            serviceAccountsEnabled   : true,
-            publicClient             : false,
-
-    ],
-            Arrays.asList(userOver, azpOver, audOver),
+            ],
+            mapperList,
             realmResource, log, comH
     )
 
@@ -320,19 +365,21 @@ def createAPIClientTemplate(final Map conf, RealmResource realmResource, log, re
         }
     }
 
-    createClient([
-            name                     : SERVICE_NAME,
-            description              : "Generic client for " + SERVICE_NAME,
-            fullScopeAllowed         : false,
-            bearerOnly               : true,
-            consentRequired          : false,
-            standardFlowEnabled      : false,
-            implicitFlowEnabled      : false,
-            directAccessGrantsEnabled: false,
-            serviceAccountsEnabled   : false,
-            publicClient             : false
-    ],
-            realmResource, log, comH)
+    if (!conf.skipGenericClient) {
+        createClient([
+                name                     : SERVICE_NAME,
+                description              : "Generic client for " + SERVICE_NAME,
+                fullScopeAllowed         : false,
+                bearerOnly               : true,
+                consentRequired          : false,
+                standardFlowEnabled      : false,
+                implicitFlowEnabled      : false,
+                directAccessGrantsEnabled: false,
+                serviceAccountsEnabled   : false,
+                publicClient             : false
+        ],
+                realmResource, log, comH)
+    }
 
     if (conf.monitoring) {
         createClient([
@@ -357,6 +404,31 @@ def createAPIClientTemplate(final Map conf, RealmResource realmResource, log, re
     return clientTemplate
 }
 
+// Get client ressource from name
+def getClientResources(clientName, realmResource) {
+    List<ClientRepresentation> clients = realmResource.clients().findByClientId(clientName)
+    return realmResource.clients().get(clients[0].id)
+}
+
+// Get client role from name
+def getRole(clientName, roleName, realmResource, log) {
+    RoleRepresentation role
+    ClientResource clientResource = getClientResources(clientName, realmResource)
+    if (clientResource != null) {
+        RolesResource roleRes = clientResource.roles()
+        if (roleRes && roleRes.list()) {
+            role = roleRes.list().find {
+                RoleRepresentation r ->
+                    r.name == roleName
+            }
+        }
+    } else {
+        log.error("Client  $clientName missing")
+    }
+
+    return role
+}
+
 def addRole(final String roleName,
             final String descriptio,
             Map<String, List<String>> composits,
@@ -365,17 +437,7 @@ def addRole(final String roleName,
             final boolean assigned,
             log, realmH, userH, comH) {
 
-    List<ClientRepresentation> clients = realmResource.clients().findByClientId(clientName)
-    ClientResource clientResource = realmResource.clients().get(clients[0].id)
-    RolesResource roleRes = clientResource.roles()
-    RoleRepresentation role
-
-    if (roleRes && roleRes.list()) {
-        role = roleRes.list().find {
-            RoleRepresentation r ->
-                r.name == roleName
-        }
-    }
+    RoleRepresentation role = getRole(clientName, roleName, realmResource, log)
     if (role == null) {
         role = new RoleRepresentation()
         role.with {
@@ -387,6 +449,7 @@ def addRole(final String roleName,
         if (composits) {
             role.composite = true
         }
+        ClientResource clientResource = getClientResources(clientName, realmResource)
         clientResource.roles().create(role)
         role = clientResource.roles().get(roleName).toRepresentation()
 
@@ -410,7 +473,6 @@ def addBanMaintainer(RealmResource realmResource, log, realmH, userH, comH) {
 
     //Create client role and add it
     addRole("ban-readonly", "Ban status", ["realm-management": [
-            "view-events",
             "query-users",
             "view-users"
     ]], realmResource, maintainer.clientId, true, log, realmH, userH, comH)

@@ -11,7 +11,7 @@ import org.keycloak.representations.idm.RealmRepresentation
  */
 
 def createFederation(final String fedName, String customFilter, RealmResource realmResource, log, comH, prop) {
-    if("ON" == System.getProperty("MOCK")) return
+    if ("ON" == System.getProperty("MOCK")) return
     RealmRepresentation realm = realmResource.toRepresentation()
 
     //Check component
@@ -100,8 +100,8 @@ def add(String fedName,
         String groupsLdap,
         groupRoles,
         RealmResource realmResource,
-        log, comH, fedH, prop) {
-    if("ON" == System.getProperty("MOCK")) return
+        log, userH, realmH, clientH, comH, fedH, prop) {
+    if ("ON" == System.getProperty("MOCK")) return
     def roleCompName = " ${fedName}-roles"
     comH.debug("add LDAP $fedName $customFilter $roleCompName")
     ComponentRepresentation component = createFederation(
@@ -113,7 +113,7 @@ def add(String fedName,
             prop
     )
 
-    fedH.applyRoles(roleCompName, groupsLdap, groupRoles, component, realmResource, log, comH)
+    fedH.applyRoles(roleCompName, groupsLdap, groupRoles, component, realmResource, log, userH, realmH, clientH, comH)
 
     fedH.triggerUpdate(component, realmResource, log, comH)
 }

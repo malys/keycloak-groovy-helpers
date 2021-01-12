@@ -9,20 +9,22 @@ import org.keycloak.representations.idm.RealmRepresentation
 /**
  * RH-SSO Rest Federation helpers
  */
-def createFederation(final Map conf, RealmResource realmResource, log, comm) {
-    if("ON" == System.getProperty("MOCK")) return
+def createFederation(final Map conf, RealmResource realmResource, log, comH) {
+    if ("ON" == System.getProperty("MOCK")) return
     RealmRepresentation realm = realmResource.toRepresentation()
+
+    def federationName = comH.format(conf.name)
 
     //Check component
     List<ComponentRepresentation> components = realmResource.components().query(realm.getId(),
             "org.keycloak.storage.UserStorageProvider",
-            conf.name)
+            federationName)
 
     if (components.size() == 0) {
         ComponentRepresentation compPres = new ComponentRepresentation()
         //Add new ldap component
         compPres.with {
-            name = conf.name
+            name = federationName
             providerId = "Rest User Federation"
             providerType = "org.keycloak.storage.UserStorageProvider"
             parentId = realm.id
@@ -49,17 +51,21 @@ def createFederation(final Map conf, RealmResource realmResource, log, comm) {
             proxy_enabled = [conf.proxy_enabled]
             not_create_users = [conf.not_create_users]
             by_pass = [conf.by_pass]
+            password_sync = [conf.password_sync]
+            password_hash_algorithm = [conf.password_hash_algorithm]
+            password_hash_iteration = [conf.password_hash_iteration]
+
         }
 
         log.info(compPres.config.toMapString())
-        comm.checkResponse(realmResource.components().add(compPres), "Component ${conf.name} created", log)
+        comH.checkResponse(realmResource.components().add(compPres), "Component ${federationName} created", log)
         components = realmResource.components().query(realm.getId(),
                 "org.keycloak.storage.UserStorageProvider",
-                conf.name)
+                federationName)
         component = components.get(0)
     } else {
         component = components.get(0)
-        log.info("Component ${conf.name} yet installed")
+        log.info("Component ${federationName} yet installed")
     }
 
     return component
@@ -74,11 +80,15 @@ def add(final Map conf, RealmResource realmResource, log, comH, fedH, prop) {
             log,
             comH
     )
-    fedH.triggerUpdate(component, realmResource, log, comH)
+    if(conf.skipTriggerUpdate==null || !conf.skipTriggerUpdate){
+        fedH.triggerUpdate(component, realmResource, log, comH)
+    } else {
+        log.info("Skip federation trigger update")
+    }
 }
 
 def updateFederation(final Map conf, RealmResource realmResource, log, comm) {
-    if("ON" == System.getProperty("MOCK")) return
+    if ("ON" == System.getProperty("MOCK")) return
     RealmRepresentation realm = realmResource.toRepresentation()
 
     List<ComponentRepresentation> components = realmResource.components().query(realm.getId(),
@@ -109,6 +119,9 @@ def updateFederation(final Map conf, RealmResource realmResource, log, comm) {
             proxy_enabled = [conf.proxy_enabled]
             not_create_users = [conf.not_create_users]
             by_pass = [conf.by_pass]
+            password_sync = [conf.password_sync]
+            password_hash_algorithm = [conf.password_hash_algorithm]
+            password_hash_iteration[conf.password_hash_iteration]
         }
 
         ComponentResource compRes = realmResource.components().component(compPres.getId())
