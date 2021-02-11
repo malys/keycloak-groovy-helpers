@@ -170,7 +170,7 @@ def addRoleToAccountService(RealmResource realmResource, serviceName, roles, pre
     def rolesList = roles.collect { it -> prefix + "_" + it }
 
     rolesList.each { it ->
-        clientH.addRole(it, serviceName + " " + it, null, realmResource, serviceName, false, log, realmH, userH, comH)
+        clientH.addRole(it, null, null, realmResource, serviceName, false, log, realmH, userH, comH)
     }
 }
 
@@ -384,7 +384,7 @@ def createAPIClientTemplate(final Map conf, RealmResource realmResource, log, re
     if (conf.monitoring) {
         createClient([
                 name                     : "monitoring",
-                description              : "API key for monitoring",
+                description              : "Service account for monitoring",
                 clientTemplate           : conf.clientTemplate,
                 fullScopeAllowed         : false,
                 bearerOnly               : false,
