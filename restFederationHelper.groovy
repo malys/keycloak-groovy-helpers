@@ -54,7 +54,7 @@ def createFederation(final Map conf, RealmResource realmResource, log, comH) {
             password_sync = [conf.password_sync]
             password_hash_algorithm = [conf.password_hash_algorithm]
             password_hash_iteration = [conf.password_hash_iteration]
-
+            public_url = [conf.public_url]
         }
 
         log.info(compPres.config.toMapString())
@@ -122,6 +122,7 @@ def updateFederation(final Map conf, RealmResource realmResource, log, comm) {
             password_sync = [conf.password_sync]
             password_hash_algorithm = [conf.password_hash_algorithm]
             password_hash_iteration[conf.password_hash_iteration]
+            public_url = [conf.public_url]
         }
 
         ComponentResource compRes = realmResource.components().component(compPres.getId())
