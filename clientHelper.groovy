@@ -167,7 +167,7 @@ def createClientTemplate(final Map conf,
 }
 // Create new roles in account services
 def addRoleToAccountService(RealmResource realmResource, serviceName, roles, prefix, log, realmH, clientH, userH, busH, comH) {
-    def rolesList = roles.collect { it -> prefix + "_" + it }
+    def rolesList = roles.collect { it -> comH.formatBusinessRole(prefix, it) }
 
     rolesList.each { it ->
         clientH.addRole(it, null, null, realmResource, serviceName, false, log, realmH, userH, comH)
