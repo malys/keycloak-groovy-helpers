@@ -42,7 +42,7 @@ def createClient(final Map conf,
         bearerOnly = conf.bearerOnly
         consentRequired = conf.consentRequired
         standardFlowEnabled = conf.standardFlowEnabled
-        implicitFlowEnabled = conf.implicitFlowEnabled
+        implicitFlowEnabled = false
         serviceAccountsEnabled = conf.serviceAccountsEnabled
         description = conf.description
     }
@@ -136,7 +136,7 @@ def createClientTemplate(final Map conf,
         bearerOnly = conf.bearerOnly
         consentRequired = conf.consentRequired
         standardFlowEnabled = conf.standardFlowEnabled
-        implicitFlowEnabled = conf.implicitFlowEnabled
+        implicitFlowEnabled = false
         directAccessGrantsEnabled = conf.directAccessGrantsEnabled
         serviceAccountsEnabled = conf.serviceAccountsEnabled
         publicClient = conf.publicClient
