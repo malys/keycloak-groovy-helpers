@@ -45,7 +45,7 @@ def create(final Map conf, Keycloak k, log, comH) {
         loginWithEmailAllowed = conf.loginWithEmailAllowed ? conf.loginWithEmailAllowed : false
         registrationAllowed = conf.registrationAllowed ? conf.registrationAllowed : false
         registrationEmailAsUsername = conf.registrationEmailAsUsername ? conf.registrationEmailAsUsername : false
-        rememberMe = conf.rememberMe ? conf.rememberMe : false
+        rememberMe = false
         resetPasswordAllowed = conf.resetPasswordAllowed ? conf.resetPasswordAllowed : false
         verifyEmail = conf.verifyEmail ? conf.verifyEmail : false
         sslRequired = conf.sslRequired ? conf.sslRequired : "all" // for security
