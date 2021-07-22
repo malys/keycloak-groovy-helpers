@@ -42,7 +42,7 @@ def createClient(final Map conf,
         bearerOnly = conf.bearerOnly
         consentRequired = conf.consentRequired
         standardFlowEnabled = conf.standardFlowEnabled
-        implicitFlowEnabled = conf.implicitFlowEnabled
+        implicitFlowEnabled = false
         serviceAccountsEnabled = conf.serviceAccountsEnabled
         description = conf.description
     }
@@ -136,7 +136,7 @@ def createClientTemplate(final Map conf,
         bearerOnly = conf.bearerOnly
         consentRequired = conf.consentRequired
         standardFlowEnabled = conf.standardFlowEnabled
-        implicitFlowEnabled = conf.implicitFlowEnabled
+        implicitFlowEnabled = false
         directAccessGrantsEnabled = conf.directAccessGrantsEnabled
         serviceAccountsEnabled = conf.serviceAccountsEnabled
         publicClient = conf.publicClient
@@ -167,7 +167,7 @@ def createClientTemplate(final Map conf,
 }
 // Create new roles in account services
 def addRoleToAccountService(RealmResource realmResource, serviceName, roles, prefix, log, realmH, clientH, userH, busH, comH) {
-    def rolesList = roles.collect { it -> prefix + "_" + it }
+    def rolesList = roles.collect { it -> comH.formatBusinessRole(prefix, it) }
 
     rolesList.each { it ->
         clientH.addRole(it, null, null, realmResource, serviceName, false, log, realmH, userH, comH)
