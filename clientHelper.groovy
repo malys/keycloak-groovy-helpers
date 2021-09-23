@@ -285,37 +285,17 @@ def createAPIClientTemplate(final Map conf, RealmResource realmResource, log, re
     }
     mapperList.add(emailOver)
 
-    ProtocolMapperRepresentation azpOver = new ProtocolMapperRepresentation()
-    azpOver.with {
-        name = "azpOverride"
+    ProtocolMapperRepresentation audJsOver = new ProtocolMapperRepresentation()
+    audJsOver.with {
+        name = "audJsOverride"
         protocol = "openid-connect"
-        protocolMapper = "oidc-hardcoded-claim-mapper"
+        protocolMapper = "oidc-script-based-protocol-mapper"
         consentRequired = false
         config = new MultivaluedHashMap<>()
-        config["claim.value"] = SERVICE_NAME
-        config["userinfo.token.claim"] = "false"
-        config["id.token.claim"] = "false"
+        config["script"] = "token.audience(\"" + SERVICE_NAME + "\")";
         config["access.token.claim"] = "true"
-        config["claim.name"] = "azp"
-        config["jsonType.label"] = "String"
     }
-    mapperList.add(azpOver)
-
-    ProtocolMapperRepresentation audOver = new ProtocolMapperRepresentation()
-    audOver.with {
-        name = "audOverride"
-        protocol = "openid-connect"
-        protocolMapper = "oidc-hardcoded-claim-mapper"
-        consentRequired = false
-        config = new MultivaluedHashMap<>()
-        config["claim.value"] = SERVICE_NAME
-        config["userinfo.token.claim"] = "false"
-        config["id.token.claim"] = "false"
-        config["access.token.claim"] = "true"
-        config["claim.name"] = "aud"
-        config["jsonType.label"] = "String"
-    }
-    mapperList.add(audOver)
+    mapperList.add(audJsOver)
 
     if (conf.roles != null) {
         conf.roles.each { role ->
