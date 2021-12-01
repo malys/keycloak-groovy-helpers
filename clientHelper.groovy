@@ -447,6 +447,22 @@ def addRole(final String roleName,
     return role
 }
 
+def removeRole(final String roleName,
+            RealmResource realmResource,
+            String clientName,
+            log) {
+
+    RoleRepresentation role = getRole(clientName, roleName, realmResource, log)
+    if (role != null) {
+        ClientResource clientResource = getClientResources(clientName, realmResource)
+        clientResource.roles().deleteRole(roleName)
+        log.info("Remove $roleName from $clientName")
+    } else {
+        log.warn("$roleName not found from $clientName")
+    }
+
+}
+
 def addBanMaintainer(RealmResource realmResource, log, realmH, userH, comH) {
     //Create maintainer client if not exist
     ClientRepresentation maintainer = addMaintainerClient(realmResource, log, realmH, userH, comH)
