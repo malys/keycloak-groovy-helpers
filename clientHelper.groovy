@@ -198,9 +198,8 @@ def addRoleToClientAccountService(final Map config, realmResource, log, userH, c
  * @return client
  */
 def addMaintainerClient(RealmResource realmResource, log, realmH, userH, comH) {
-    def MAINTAINER = "maintainer"
     ClientRepresentation maintainer = createClient([
-            name                     : MAINTAINER,
+            name                     : CLIENT_MAINTAINER,
             description              : "Client to maintain (CRUD) API keys",
             fullScopeAllowed         : false,
             bearerOnly               : false,
@@ -220,7 +219,7 @@ def addMaintainerClient(RealmResource realmResource, log, realmH, userH, comH) {
             "view-clients",
             "query-clients",
             "manage-clients"
-    ]], realmResource, MAINTAINER, true, log, realmH, userH, comH)
+    ]], realmResource, CLIENT_MAINTAINER, true, log, realmH, userH, comH)
 
     return maintainer
 }
@@ -363,7 +362,7 @@ def createAPIClientTemplate(final Map conf, RealmResource realmResource, log, re
 
     if (conf.monitoring) {
         createClient([
-                name                     : "monitoring",
+                name                     : CLIENT_MONITORING,
                 description              : "Service account for monitoring",
                 clientTemplate           : conf.clientTemplate,
                 fullScopeAllowed         : false,
@@ -475,4 +474,6 @@ def addBanMaintainer(RealmResource realmResource, log, realmH, userH, comH) {
 
 @Field def CLIENT_TEMPLATE = "api-key"
 @Field String SERVICE_NAME = "api-service"
+@Field String CLIENT_MAINTAINER = "maintainer"
+@Field String CLIENT_MONITORING = "monitoring"
 
