@@ -456,11 +456,10 @@ def removeRole(final String roleName,
     if (role != null) {
         ClientResource clientResource = getClientResources(clientName, realmResource)
         clientResource.roles().deleteRole(roleName)
-        log.info("Remove $roleName from $clientName")
+        log.info("Role $roleName in $clientName is removed")
     } else {
-        log.warn("$roleName not found from $clientName")
+        log.warn("Role $roleName in $clientName missing")
     }
-
 }
 
 def addBanMaintainer(RealmResource realmResource, log, realmH, userH, comH) {
